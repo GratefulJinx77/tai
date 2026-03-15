@@ -1,0 +1,154 @@
+name: TAI Telemetry Aggregation
+
+on:
+  push:
+    paths:
+      - '.tai/telemetry/**'
+
+permissions:
+  contents: write
+
+jobs:
+  aggregate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Aggregate telemetry
+        run: |
+          #!/usr/bin/env bash
+          set -euo pipefail
+
+          SUMMARY_FILE=".tai/telemetry/summary.json"
+          NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          # Count events per type
+          count_events() {
+            local file="$1"
+            local event_type="$2"
+            if [ -f "$file" ]; then
+              grep -c "\"event\":\"${event_type}\"" "$file" 2>/dev/null || echo "0"
+            else
+              echo "0"
+            fi
+          }
+
+          # Count results
+          count_results() {
+            local file="$1"
+            local result="$2"
+            if [ -f "$file" ]; then
+              grep -c "\"result\":\"${result}\"" "$file" 2>/dev/null || echo "0"
+            else
+              echo "0"
+            fi
+          }
+
+          # Sessions
+          SESSIONS_TOTAL=0
+          SESSIONS_FILE=".tai/telemetry/sessions.jsonl"
+          if [ -f "$SESSIONS_FILE" ]; then
+            SESSIONS_TOTAL=$(wc -l < "$SESSIONS_FILE" | tr -d ' ')
+          fi
+
+          # Hooks
+          HOOKS_FILE=".tai/telemetry/hooks.jsonl"
+          HOOKS_PASS=$(count_results "$HOOKS_FILE" "pass")
+          HOOKS_FAIL=$(count_results "$HOOKS_FILE" "fail")
+          HOOKS_BYPASS=$(count_results "$HOOKS_FILE" "bypass")
+
+          # Boundaries
+          BOUNDARIES_FILE=".tai/telemetry/boundaries.jsonl"
+          BOUNDARY_VIOLATIONS=0
+          if [ -f "$BOUNDARIES_FILE" ]; then
+            BOUNDARY_VIOLATIONS=$(wc -l < "$BOUNDARIES_FILE" | tr -d ' ')
+          fi
+
+          # Unique users
+          UNIQUE_USERS=0
+          if [ -f "$SESSIONS_FILE" ]; then
+            UNIQUE_USERS=$(grep -o '"user":"[^"]*"' "$SESSIONS_FILE" 2>/dev/null | sort -u | wc -l | tr -d ' ')
+          fi
+
+          # Per-user session counts
+          USER_SESSIONS="[]"
+          if [ -f "$SESSIONS_FILE" ]; then
+            USER_SESSIONS=$(grep -o '"user":"[^"]*"' "$SESSIONS_FILE" 2>/dev/null | sort | uniq -c | sort -rn | \
+              awk '{gsub(/"user":"/, ""); gsub(/"/, ""); print "{\"user\":\""$2"\",\"count\":"$1"}"}' | \
+              paste -sd',' | sed 's/^/[/;s/$/]/')
+            [ -z "$USER_SESSIONS" ] && USER_SESSIONS="[]"
+          fi
+
+          # Bypass reasons
+          BYPASS_REASONS="[]"
+          if [ -f "$HOOKS_FILE" ]; then
+            BYPASS_REASONS=$(grep '"result":"bypass"' "$HOOKS_FILE" 2>/dev/null | \
+              grep -o '"bypass_reason":"[^"]*"' | sort | uniq -c | sort -rn | \
+              awk '{gsub(/"bypass_reason":"/, ""); gsub(/"/, ""); reason=$2; for(i=3;i<=NF;i++) reason=reason" "$i; print "{\"reason\":\""reason"\",\"count\":"$1"}"}' | \
+              paste -sd',' | sed 's/^/[/;s/$/]/')
+            [ -z "$BYPASS_REASONS" ] && BYPASS_REASONS="[]"
+          fi
+
+          # Sprint info
+          SPRINT_NAME=""
+          SPRINT_ISC_TOTAL=0
+          SPRINT_ISC_DONE=0
+          SPRINT_FILE=".tai/context/sprint-current.md"
+          if [ -f "$SPRINT_FILE" ]; then
+            SPRINT_NAME=$(head -1 "$SPRINT_FILE" | sed 's/^# //')
+            SPRINT_ISC_TOTAL=$(grep -c '^\- \[' "$SPRINT_FILE" 2>/dev/null || echo "0")
+            SPRINT_ISC_DONE=$(grep -c '^\- \[x\]' "$SPRINT_FILE" 2>/dev/null || echo "0")
+          fi
+
+          # TAI version
+          TAI_VERSION=""
+          if [ -f ".tai/VERSION" ]; then
+            TAI_VERSION=$(cat .tai/VERSION | tr -d '[:space:]')
+          fi
+
+          # Write summary
+          cat > "$SUMMARY_FILE" << EOF
+          {
+            "generated_at": "${NOW}",
+            "tai_version": "${TAI_VERSION}",
+            "sprint": {
+              "name": "${SPRINT_NAME}",
+              "isc_total": ${SPRINT_ISC_TOTAL},
+              "isc_done": ${SPRINT_ISC_DONE}
+            },
+            "sessions": {
+              "total": ${SESSIONS_TOTAL},
+              "unique_users": ${UNIQUE_USERS},
+              "per_user": ${USER_SESSIONS}
+            },
+            "hooks": {
+              "pass": ${HOOKS_PASS},
+              "fail": ${HOOKS_FAIL},
+              "bypass": ${HOOKS_BYPASS},
+              "bypass_reasons": ${BYPASS_REASONS}
+            },
+            "boundaries": {
+              "violations": ${BOUNDARY_VIOLATIONS}
+            }
+          }
+          EOF
+
+          # Clean up indentation
+          sed -i 's/^          //' "$SUMMARY_FILE"
+
+          echo "Telemetry summary generated:"
+          cat "$SUMMARY_FILE"
+
+      - name: Commit summary
+        run: |
+          git config user.name "TAI Telemetry Bot"
+          git config user.email "tai-bot@users.noreply.github.com"
+          git add .tai/telemetry/summary.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update telemetry summary [skip ci]"
+            git push
+          fi
