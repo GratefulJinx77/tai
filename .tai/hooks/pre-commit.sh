@@ -91,6 +91,11 @@ if [ -x "$BOUNDARY_SCRIPT" ]; then
         echo "TAI: Boundary scan FAILED."
         FAILED=1
         DETAILS="${DETAILS:+$DETAILS,}\"boundary_scan\":\"fail\""
+        # Notify on boundary violation
+        NOTIFY_SCRIPT="$TAI_ROOT/hooks/notify.sh"
+        if [ -x "$NOTIFY_SCRIPT" ]; then
+            "$NOTIFY_SCRIPT" "boundary_violation" "Boundary violation detected in pre-commit scan by $GIT_USER" &
+        fi
     fi
 else
     echo "TAI: Boundary scan script not found or not executable — skipping."

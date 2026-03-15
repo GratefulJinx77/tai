@@ -57,4 +57,11 @@ printf '{"timestamp":"%s","event":"hook.bypass","user":"%s","role":"%s","bypass_
     "$(echo "$BYPASS_REASON" | sed 's/"/\\"/g')" >> "$TELEMETRY_FILE"
 
 echo "TAI: Bypass logged — reason: $BYPASS_REASON"
+
+# Notify on bypass detected
+NOTIFY_SCRIPT="$TAI_ROOT/hooks/notify.sh"
+if [ -x "$NOTIFY_SCRIPT" ]; then
+    "$NOTIFY_SCRIPT" "hook_bypass" "Hook bypass by $GIT_USER. Reason: $BYPASS_REASON" &
+fi
+
 exit 0
