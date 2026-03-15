@@ -1,0 +1,30 @@
+team:
+  name: ""  # Project name
+
+  members:
+    - name: ""
+      email: ""  # Must match git config user.email
+      role: architect
+      github: ""
+      skills: [all]
+
+    - name: ""
+      email: ""
+      role: developer
+      github: ""
+      skills: [development, quality]
+
+    - name: ""
+      email: ""
+      role: qa
+      github: ""
+      skills: [quality, test-generation]
+
+  notifications:
+    platform: ""  # teams | slack | discord
+    webhook_url: ""
+    channel: ""
+    dm_routing:
+      pr_review: architect
+      boundary_violation: architect
+      build_failure: [architect, developer]

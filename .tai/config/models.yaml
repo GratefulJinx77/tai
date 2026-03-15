@@ -1,0 +1,7 @@
+models:
+  default: claude-sonnet-4-6
+  architecture_decisions: claude-opus-4-6
+  code_generation: claude-sonnet-4-6
+  test_generation: claude-sonnet-4-6
+  pr_review: claude-opus-4-6
+  documentation: claude-sonnet-4-6

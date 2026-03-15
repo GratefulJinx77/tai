@@ -1,0 +1,19 @@
+project:
+  name: ""
+  description: ""
+
+  stack:
+    language: ""       # e.g., TypeScript, Go, Python
+    framework: ""      # e.g., React, Express, FastAPI
+    database: ""       # e.g., PostgreSQL, SQLite
+    build_tool: ""     # e.g., Vite, Webpack, Make
+    test_runner: ""    # e.g., Vitest, Jest, pytest
+    linter: ""         # e.g., ESLint, Ruff
+    type_checker: ""   # e.g., tsc, mypy
+
+  commands:
+    build: ""          # e.g., npm run build
+    test: ""           # e.g., npm test
+    lint: ""           # e.g., npm run lint
+    type_check: ""     # e.g., npx tsc --noEmit
+    dev: ""            # e.g., npm run dev
