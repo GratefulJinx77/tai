@@ -1,0 +1,61 @@
+# Skill: /tai-sprint
+
+## Role Access
+- Architect
+- Developer
+- QA
+
+## Trigger
+User runs `/tai-sprint` to view current sprint status.
+
+## Pre-conditions
+- Sprint context file exists at `.tai/context/sprint-current.md`
+
+## Steps
+
+1. Determine current user role from CORE.md role identification.
+2. Read `.tai/context/sprint-current.md`.
+3. Parse the markdown:
+   - Extract sprint name from the first `# ` heading.
+   - Extract dates from the `## Dates:` line.
+   - Extract objectives from the `## Objectives:` section.
+   - Count ISC checkboxes: `- [x]` = done, `- [ ]` = pending. Compute N/M.
+   - Extract task assignments from the `## Task Assignments:` section.
+4. Compute days remaining if dates are available (end date minus today).
+5. Format output as structured summary.
+
+## Output Format
+
+```
+═══ TAI Sprint Status ══════════════════════════
+
+Sprint:     Sprint 3: API Layer
+Dates:      2026-03-18 → 2026-03-29 (4 days remaining)
+
+ISC Progress: 5/8 (62%)
+  [x] User authentication endpoint implemented
+  [x] Input validation middleware added
+  [x] Database migrations created
+  [ ] Rate limiting configured
+  [x] Error response format standardized
+  [ ] API documentation generated
+  [x] Integration tests passing
+  [ ] Load test baseline established
+
+Task Assignments:
+  Architect:  Define API contracts, review endpoint PRs
+  Developer:  Implement endpoints, write integration tests
+  QA:         Validate error scenarios, run load test baseline
+```
+
+### Empty State
+```
+═══ TAI Sprint Status ══════════════════════════
+No sprint configured. Run /sprint-init to create the first sprint plan.
+```
+
+## Data Sources
+- `.tai/context/sprint-current.md`: sprint name, dates, objectives, ISC checkboxes, task assignments
+
+## Privacy
+- All roles can view sprint status. No data is filtered by role.

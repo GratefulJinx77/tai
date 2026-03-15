@@ -73,10 +73,12 @@ Write session start event to `.tai/telemetry/sessions.jsonl`:
 
 ### 7. Display Status
 
-Output the TAI status line:
+Output the TAI status line as specified in `.tai/status-line.md`:
 ```
-│ <ROLE> │ <Sprint Name> │ <N/M ISC> │ HOOKS: <status> │ <duration> │ TAI v<version> │
+│ <ROLE> │ <Sprint Name> │ <N/M ISC> │ HOOKS: <status> │ <duration> │ TAI v<version> │ <N> violations │
 ```
+
+See `.tai/status-line.md` for segment data sources, color coding, refresh triggers, and error surfacing rules.
 
 ## Operational Rules
 
@@ -90,6 +92,15 @@ Output the TAI status line:
 - **Architect**: Full codebase access. Makes architecture decisions. Reviews all PRs. Loads all skills.
 - **Developer**: Scoped to assigned features + shared modules. Must run /pre-pr before submitting. Cannot make architecture decisions without architect consultation.
 - **QA**: Full read access, write access to test directories only. Focuses on test coverage, scenario validation, and regression detection.
+
+### Observability Commands
+All roles can run `/tai-sprint` to view sprint status. Additional query skills in `.tai/skills/query/`:
+- `/tai-sessions` — Session activity log (Architect: all users; Developer/QA: own only)
+- `/tai-bypasses` — Hook bypass history (Architect only)
+- `/tai-boundaries` — Boundary violation history (Architect only)
+- `/tai-sprint` — Current sprint status with ISC progress (all roles)
+- `/tai-health` — Project health dashboard (Architect, QA)
+- `/tai-usage` — AI model usage and cost metrics (Architect: all; Developer: own only)
 
 ### Verification Discipline
 - Pre-commit: linter + type checker + boundary scan must pass
