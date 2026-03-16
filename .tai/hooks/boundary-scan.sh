@@ -103,8 +103,24 @@ while IFS='|' read -r source_glob target_glob; do
         if [ ! -f "$file" ]; then
             continue
         fi
-        # Scan for import/require/from statements that match the target
+
+        # Resolve what the target path looks like relative to this source file
+        # e.g., source=src/services/extraction/foo.js, target=src/services/pricing/**
+        # The relative import would be ../pricing/...
+        file_dir="$(dirname "$file")"
+        target_base="$(echo "$target_glob" | sed 's/\*\*$//' | sed 's/\/$//')"
+        rel_target="$(python3 -c "import os.path; print(os.path.relpath('$target_base', '$file_dir'))" 2>/dev/null || echo "")"
+        rel_regex="$(echo "$rel_target" | sed 's/\./\\./g')"
+
+        # Scan for import/require/from statements that match target (absolute or relative)
+        matches="$(grep -nE "(import |require\(|require |from )" "$file" 2>/dev/null | grep -E "($target_regex|$rel_regex)" || true)"
+
+        if [ -z "$matches" ]; then
+            continue
+        fi
+
         while IFS= read -r match; do
+            [ -z "$match" ] && continue
             line_num="$(echo "$match" | cut -d: -f1)"
             line_content="$(echo "$match" | cut -d: -f2-)"
 
@@ -122,7 +138,7 @@ while IFS='|' read -r source_glob target_glob; do
                 "$source_glob" "$target_glob" >> "$TELEMETRY_FILE"
 
             VIOLATIONS=$((VIOLATIONS + 1))
-        done <<< "$(grep -nE "(import|require|from)\s" "$file" 2>/dev/null | grep -E "$target_regex" || true)"
+        done <<< "$matches"
     done <<< "$matching_files"
 done <<< "$RULES"
 

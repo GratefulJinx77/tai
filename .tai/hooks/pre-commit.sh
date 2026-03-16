@@ -36,7 +36,7 @@ ROLE="$(resolve_role)"
 read_command() {
     local key="$1"
     if [ -f "$PROJECT_YAML" ]; then
-        grep "^    ${key}:" "$PROJECT_YAML" 2>/dev/null | sed "s/^    ${key}: *//" | sed 's/^"//' | sed 's/"$//' | sed "s/^'//" | sed "s/'$//"
+        grep "^    ${key}:" "$PROJECT_YAML" 2>/dev/null | sed "s/^    ${key}: *//" | sed 's/^"//;s/"$//' | sed "s/^'//;s/'$//"
     fi
 }
 
