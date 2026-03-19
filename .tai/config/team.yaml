@@ -1,6 +1,9 @@
 team:
   name: ""
   admin_users: []  # emails of members who can activate /tai-admin
+  location:
+    city: ""       # e.g., "Key West" — used in statusline, skips geolocation if set
+    state: ""      # e.g., "Florida"
   members:
     - name: ""
       email: ""  # Must match git config user.email

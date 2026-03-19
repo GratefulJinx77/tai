@@ -346,7 +346,17 @@ GITEOF
 } &
 
 {
-    # 2. Location fetch (with caching)
+    # 2. Location fetch (config override → cache → API)
+    # Check team.yaml or project.yaml for configured location first
+    config_city=""
+    config_state=""
+    if [ -f "$TEAM_CONFIG" ]; then
+        config_city=$(grep -E '^\s+city:' "$TEAM_CONFIG" 2>/dev/null | head -1 | sed 's/.*city: *//' | tr -d '"'"'")
+        config_state=$(grep -E '^\s+state:' "$TEAM_CONFIG" 2>/dev/null | head -1 | sed 's/.*state: *//' | tr -d '"'"'")
+    fi
+    if [ -n "$config_city" ]; then
+        echo -e "location_city='${config_city}'\nlocation_state='${config_state}'" > "$_parallel_tmp/location.sh"
+    else
     cache_age=999999
     [ -f "$LOCATION_CACHE" ] && cache_age=$(($(date +%s) - $(get_mtime "$LOCATION_CACHE")))
 
@@ -362,6 +372,7 @@ GITEOF
         jq -r '"location_city=" + (.city | @sh) + "\nlocation_state=" + (.regionName | @sh)' "$LOCATION_CACHE" > "$_parallel_tmp/location.sh" 2>/dev/null
     else
         echo -e "location_city='Unknown'\nlocation_state=''" > "$_parallel_tmp/location.sh"
+    fi
     fi
 } &
 
