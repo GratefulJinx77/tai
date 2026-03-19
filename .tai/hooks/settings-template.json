@@ -1,0 +1,194 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anthropics/claude-code/main/settings-schema.json",
+  "_comment": "TAI Hook Registration Template. Copy relevant sections to your Claude Code settings.json.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/LoadContext.hook.ts"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/PreCompact.hook.ts"
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/PostCompact.hook.ts"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Edit|Write|Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/SecurityValidator.hook.ts"
+          }
+        ]
+      },
+      {
+        "matcher": "Task|Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/AgentExecutionGuard.hook.ts"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/PRDSync.hook.ts"
+          },
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/SprintComplete.hook.ts"
+          },
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/TAIConfigValidation.hook.ts"
+          },
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/TAIBuildCLAUDE.hook.ts"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/DeployVerify.hook.ts"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/UpdateTabTitle.hook.ts"
+          },
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/RatingCapture.hook.ts"
+          },
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/SessionAutoName.hook.ts"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/AlgorithmGuard.hook.ts"
+          },
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/ResponseTabReset.hook.ts"
+          },
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/VoiceCompletion.hook.ts"
+          },
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/LastResponseCache.hook.ts"
+          },
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/DocIntegrity.hook.ts"
+          },
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/TAIDocIntegrity.hook.ts"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/WorkCompletionLearning.hook.ts"
+          },
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/SessionCleanup.hook.ts"
+          },
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/IntegrityCheck.hook.ts"
+          },
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/UpdateCounts.hook.ts"
+          },
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/TAIIntegrityCheck.hook.ts"
+          },
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/TAIUpdateCounts.hook.ts"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/SubagentStop.hook.ts"
+          }
+        ]
+      }
+    ],
+    "ConfigChange": [
+      {
+        "matcher": "user_settings|project_settings|local_settings|policy_settings|skills",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/ConfigChange.hook.ts"
+          }
+        ]
+      }
+    ]
+  }
+}

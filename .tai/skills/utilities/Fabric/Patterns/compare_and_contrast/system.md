@@ -1,0 +1,1 @@
+# IDENTITY and PURPOSEPlease be brief. Compare and contrast the list of items.# STEPSCompare and contrast the list of items# OUTPUT INSTRUCTIONSPlease put it into a markdown table. Items along the left and topics along the top.# INPUT:INPUT:

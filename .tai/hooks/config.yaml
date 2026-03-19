@@ -1,0 +1,214 @@
+# TAI Hook Configuration
+#
+# Hooks are organized into three tiers:
+#   required     - Always installed, cannot be disabled
+#   recommended  - Installed by default, can be disabled with --minimal
+#   optional     - Not installed by default, enable with --all or individually
+#
+# Each hook specifies:
+#   event    - Claude Code hook event type
+#   matcher  - Tool matcher (for PreToolUse/PostToolUse hooks)
+#   tier     - required | recommended | optional
+
+version: "2.0"
+
+hooks:
+  # ─── Memory Hooks (Session lifecycle) ───────────────────────────
+
+  LoadContext:
+    file: LoadContext.hook.ts
+    event: SessionStart
+    tier: required
+    description: Inject dynamic context (learnings, active work) at session start
+
+  PreCompact:
+    file: PreCompact.hook.ts
+    event: PreCompact
+    tier: required
+    description: Snapshot critical state before context compaction
+
+  PostCompact:
+    file: PostCompact.hook.ts
+    event: PostCompact
+    tier: required
+    description: Re-inject critical state after context compaction
+
+  WorkCompletionLearning:
+    file: WorkCompletionLearning.hook.ts
+    event: SessionEnd
+    tier: recommended
+    description: Capture learnings from completed work sessions
+
+  SessionCleanup:
+    file: SessionCleanup.hook.ts
+    event: SessionEnd
+    tier: required
+    description: Mark work complete, clear state, reset tab
+
+  PRDSync:
+    file: PRDSync.hook.ts
+    event: PostToolUse
+    matcher: [Write, Edit]
+    tier: recommended
+    description: Sync PRD frontmatter to work.json dashboard
+
+  SprintComplete:
+    file: SprintComplete.hook.ts
+    event: PostToolUse
+    matcher: [Write, Edit]
+    tier: recommended
+    description: Log sprint completion when PRD phase reaches complete
+
+  ConfigChange:
+    file: ConfigChange.hook.ts
+    event: ConfigChange
+    matcher: [user_settings, project_settings, local_settings, policy_settings, skills]
+    tier: recommended
+    description: Log configuration changes for observability
+
+  # ─── Workflow Hooks (Enforcement) ───────────────────────────────
+
+  SecurityValidator:
+    file: SecurityValidator.hook.ts
+    event: PreToolUse
+    matcher: [Bash, Edit, Write, Read]
+    tier: required
+    description: Validate commands and file access against security patterns
+
+  AgentExecutionGuard:
+    file: AgentExecutionGuard.hook.ts
+    event: PreToolUse
+    matcher: [Task, Agent]
+    tier: recommended
+    description: Warn when non-fast agents are spawned without background flag
+
+  DeployVerify:
+    file: DeployVerify.hook.ts
+    event: PostToolUse
+    matcher: [Bash]
+    tier: recommended
+    description: Wait for CI after git push, report pass/fail
+
+  AlgorithmGuard:
+    file: AlgorithmGuard.hook.ts
+    event: Stop
+    tier: recommended
+    description: Prevent premature Algorithm termination
+
+  SubagentStop:
+    file: SubagentStop.hook.ts
+    event: SubagentStop
+    tier: recommended
+    description: Log subagent completion, scaffold agent memory
+
+  # ─── Optional Hooks (Terminal UX) ───────────────────────────────
+
+  KittyEnvPersist:
+    file: KittyEnvPersist.hook.ts
+    event: SessionStart
+    tier: optional
+    description: Persist Kitty terminal env vars + reset tab title
+
+  SetQuestionTab:
+    file: SetQuestionTab.hook.ts
+    event: PreToolUse
+    matcher: [AskUserQuestion]
+    tier: optional
+    description: Set tab to teal when awaiting user input
+
+  QuestionAnswered:
+    file: QuestionAnswered.hook.ts
+    event: PostToolUse
+    matcher: [AskUserQuestion]
+    tier: optional
+    description: Reset tab from question state after answer
+
+  ResponseTabReset:
+    file: ResponseTabReset.hook.ts
+    event: Stop
+    tier: optional
+    description: Convert working title to past tense on completion
+
+  VoiceCompletion:
+    file: VoiceCompletion.hook.ts
+    event: Stop
+    tier: optional
+    description: Send completion voice line to TTS server
+
+  UpdateTabTitle:
+    file: UpdateTabTitle.hook.ts
+    event: UserPromptSubmit
+    tier: optional
+    description: Update tab title based on user prompt
+
+  RatingCapture:
+    file: RatingCapture.hook.ts
+    event: UserPromptSubmit
+    tier: optional
+    description: Capture explicit and implicit ratings
+
+  SessionAutoName:
+    file: SessionAutoName.hook.ts
+    event: UserPromptSubmit
+    tier: optional
+    description: Auto-generate 4-word session names
+
+  LastResponseCache:
+    file: LastResponseCache.hook.ts
+    event: Stop
+    tier: optional
+    description: Cache last response for RatingCapture bridge
+
+  # ─── Optional Hooks (Integrity) ────────────────────────────────
+
+  DocIntegrity:
+    file: DocIntegrity.hook.ts
+    event: Stop
+    tier: optional
+    description: Check cross-refs when system docs/hooks modified
+
+  IntegrityCheck:
+    file: IntegrityCheck.hook.ts
+    event: SessionEnd
+    tier: optional
+    description: Detect system file changes, log for maintenance
+
+  UpdateCounts:
+    file: UpdateCounts.hook.ts
+    event: SessionEnd
+    tier: optional
+    description: Refresh system counts (skills, hooks, ratings)
+
+  # ─── TAI-Specific Hooks ─────────────────────────────────────────
+
+  TAIDocIntegrity:
+    file: TAIDocIntegrity.hook.ts
+    event: Stop
+    tier: recommended
+    description: Validate TAI doc consistency (CORE.md, config cross-refs)
+
+  TAIIntegrityCheck:
+    file: TAIIntegrityCheck.hook.ts
+    event: SessionEnd
+    tier: recommended
+    description: Validate TAI directory structure completeness
+
+  TAIUpdateCounts:
+    file: TAIUpdateCounts.hook.ts
+    event: SessionEnd
+    tier: optional
+    description: Collect TAI-specific metrics (team, boundaries, security)
+
+  TAIConfigValidation:
+    file: TAIConfigValidation.hook.ts
+    event: PostToolUse
+    matcher: [Write, Edit]
+    tier: recommended
+    description: Validate TAI config files on change
+
+  TAIBuildCLAUDE:
+    file: TAIBuildCLAUDE.hook.ts
+    event: PostToolUse
+    matcher: [Write, Edit]
+    tier: recommended
+    description: Detect when CLAUDE.md may need rebuilding

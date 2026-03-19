@@ -1,0 +1,4 @@
+# Don't commit raw session state (ephemeral)
+state/pre-compact-*.json
+state/session-*.json
+# Do commit everything else (decisions, learnings, signals are team knowledge)

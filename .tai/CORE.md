@@ -1,114 +1,64 @@
 # TAI Session Protocol
 
-TAI (Team AI Infrastructure) activates on session start. This file is loaded by Claude Code after CLAUDE.md and orchestrates role-aware, sprint-aware, discipline-enforced sessions.
+## Initialization (runs when Claude Code starts in a TAI-enabled project)
 
-## Session Initialization
+1. **Detect TAI** — Look for .tai/ directory in project root
+2. **Load team context** — Read .tai/config/team.yaml for team members
+3. **Identify member** — Match git config user.email against team.yaml members
+4. **Load role context** — Read .tai/roles/{role}.md (default: dev.md)
+5. **Load memory** — LoadContext hook injects:
+   - memory/decisions/INDEX.md (active architectural decisions)
+   - memory/learnings/summary.md (synthesized team learnings)
+   - memory/state/current.md (active sprint and work items)
+6. **Load project context** — Read context/architecture.md, context/boundaries.md, context/patterns.md
+7. **Verify hooks** — Check .git/hooks/ for installed TAI hooks
+8. **Display status line** — Show rich multi-segment status display
 
-On session start, execute this sequence:
+## Context Recovery (after compaction)
 
-### 1. Identify Role
+If context is compressed mid-session, PostCompact hook re-injects:
+- Active decisions from memory/decisions/INDEX.md
+- Current work state from memory/state/current.md
+- Active sprint ISC criteria
 
-Determine the current developer's role:
+## Session End
 
-```
-1. Check environment variable: TAI_ROLE
-   - If set to "architect", "developer", or "qa" → use that role
-   - If set to any other value → warn and fall back to step 2
+SessionEnd hooks automatically:
+- Capture session learnings (what worked, what didn't) — no user attribution
+- Mark active work as completed
+- Clean up session state
 
-2. Check git email: git config user.email
-   - Match against .tai/config/team.yaml members[].email
-   - If matched → use that member's role
+## Governance
 
-3. Default: "developer"
-   - Log warning to .tai/telemetry/sessions.jsonl:
-     {"event": "role.default", "reason": "no match for email or TAI_ROLE"}
-```
+- **Dev** — Default role. Full access to all skills, queries, hooks.
+- **QA** — Quality-focused context. Same access as Dev.
+- **Pub** — Content/public-facing context. Same access as Dev.
+- **Admin** — Activated via /tai-admin command. Adds TAI system configuration capabilities.
 
-### 2. Load Role Context
+Roles shape context, they don't restrict access. Every team member can use every skill.
 
-Read the role-specific context file:
-- Architect → `.tai/roles/architect.md`
-- Developer → `.tai/roles/developer.md`
-- QA → `.tai/roles/qa.md`
+## Admin Mode
 
-The role file defines: operational directives, boundary constraints, available skills, verification checklist, and escalation protocol.
+Run /tai-admin to switch current session to Admin mode. Admin mode:
+- Loads .tai/roles/admin.md context
+- Enables TAI configuration changes (hooks/config.yaml, team.yaml, packages.yaml)
+- Only available to members listed in team.yaml admin_users
+- Ends when session ends
 
-### 3. Load Sprint Context
+## Memory System
 
-Read `.tai/context/sprint-current.md` for:
-- Current sprint name, dates, objectives
-- ISC (Ideal State Criteria) with checkbox status
-- Task assignments per role
+TAI maintains team-shared memory across all sessions:
+- **Decisions** — Why we chose X over Y. Loaded at every session start.
+- **Learnings** — What worked and what didn't. Synthesized monthly.
+- **State** — Active sprint and work items. Always current.
+- **Signals** — Team satisfaction with AI output quality.
+- **Failures** — Context dumps on bad sessions for team learning.
 
-### 4. Load Architecture Context
+## Convention Enforcement
 
-Read these files for hard constraints:
-- `.tai/context/boundaries.md` — forbidden import paths, service separation rules
-- `.tai/context/patterns.md` — code conventions, naming standards, file organization
+Conventions are documented in context/patterns.md and enforced by:
+- pre-commit hook (lint, type-check, boundary-scan)
+- pre-push hook (test suite)
+- pre-pr hook (build + tests + PR description)
 
-### 5. Activate Hooks
-
-Verify hooks are installed:
-- `.tai/hooks/pre-commit.sh` → git pre-commit
-- `.tai/hooks/pre-push.sh` → git pre-push
-- `.tai/hooks/post-session.sh` → Claude Code post-session
-
-If hooks are not installed as git hooks, warn:
-```
-⚠️ TAI hooks not installed. Run: .tai/hooks/install.sh
-```
-
-### 6. Initialize Telemetry
-
-Write session start event to `.tai/telemetry/sessions.jsonl`:
-```json
-{
-  "timestamp": "<ISO-8601>",
-  "event": "session.start",
-  "user": "<git user.name>",
-  "role": "<resolved role>",
-  "tai_version": "<from .tai/VERSION>"
-}
-```
-
-### 7. Display Status
-
-Output the TAI status line as specified in `.tai/status-line.md`:
-```
-│ <ROLE> │ <Sprint Name> │ <N/M ISC> │ HOOKS: <status> │ <duration> │ TAI v<version> │ <N> violations │
-```
-
-See `.tai/status-line.md` for segment data sources, color coding, refresh triggers, and error surfacing rules.
-
-## Operational Rules
-
-### For All Roles
-- Follow patterns defined in `.tai/context/patterns.md`
-- Never violate boundaries defined in `.tai/context/boundaries.md`
-- Log skill invocations to `.tai/telemetry/sessions.jsonl`
-- Use the model specified in `.tai/config/models.yaml` for the current task type
-
-### Role-Specific Behavior
-- **Architect**: Full codebase access. Makes architecture decisions. Reviews all PRs. Loads all skills.
-- **Developer**: Scoped to assigned features + shared modules. Must run /pre-pr before submitting. Cannot make architecture decisions without architect consultation.
-- **QA**: Full read access, write access to test directories only. Focuses on test coverage, scenario validation, and regression detection.
-
-### Observability Commands
-All roles can run `/tai-sprint` to view sprint status. Additional query skills in `.tai/skills/query/`:
-- `/tai-sessions` — Session activity log (Architect: all users; Developer/QA: own only)
-- `/tai-bypasses` — Hook bypass history (Architect only)
-- `/tai-boundaries` — Boundary violation history (Architect only)
-- `/tai-sprint` — Current sprint status with ISC progress (all roles)
-- `/tai-health` — Project health dashboard (Architect, QA)
-- `/tai-usage` — AI model usage and cost metrics (Architect: all; Developer: own only)
-
-### Verification Discipline
-- Pre-commit: linter + type checker + boundary scan must pass
-- Pre-push: full test suite must pass
-- Pre-PR: all of the above + build + PR description with AI disclosure
-- Hook bypass requires a mandatory reason string, logged to telemetry
-
-## Version Check
-
-Current TAI version: read from `.tai/VERSION`
-Display in status line. If team.yaml specifies a minimum version, warn if current < minimum.
+These are team agreements, not surveillance. Hook status is logged without individual attribution.

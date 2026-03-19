@@ -1,0 +1,1 @@
+# Usage for this pattern:```bashgit diff```Get the diffs since the last commit```bashgit show HEAD```

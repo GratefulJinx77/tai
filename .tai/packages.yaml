@@ -1,0 +1,67 @@
+skills:
+  core:
+    version: "1.0.0"
+    tier: required
+    description: "TAI core development, quality, architecture, project, and query skills"
+  thinking:
+    version: "1.0.0"
+    tier: required
+    description: "First principles, council debates, red teaming, brainstorming, science"
+  research:
+    version: "1.0.0"
+    tier: required
+    description: "Multi-agent research, content extraction, web search"
+  security:
+    version: "1.0.0"
+    tier: recommended
+    description: "Reconnaissance, web assessment, prompt injection testing"
+  agents:
+    version: "1.0.0"
+    tier: required
+    description: "Custom agent composition, parallel spawning, trait system"
+  media:
+    version: "1.0.0"
+    tier: optional
+    description: "Art, diagrams, mermaid, video, illustrations"
+  content-analysis:
+    version: "1.0.0"
+    tier: optional
+    description: "Wisdom extraction from videos, podcasts, articles"
+  scraping:
+    version: "1.0.0"
+    tier: optional
+    description: "Web scraping via Bright Data proxy and Apify actors"
+  utilities:
+    version: "1.0.0"
+    tier: recommended
+    description: "CLI generation, skill scaffolding, browser automation"
+  project-audit:
+    version: "1.0.0"
+    tier: recommended
+    description: "Parallel agent accuracy audit for any codebase"
+
+agents:
+  core:
+    version: "1.0.0"
+    tier: required
+    description: "Engineer, Architect, Designer, QATester, BrowserAgent, UIReviewer, visual-analyst"
+  research:
+    version: "1.0.0"
+    tier: recommended
+    description: "ClaudeResearcher, CodexResearcher, GeminiResearcher, GrokResearcher, PerplexityResearcher"
+  security:
+    version: "1.0.0"
+    tier: optional
+    description: "Pentester agent"
+  creative:
+    version: "1.0.0"
+    tier: optional
+    description: "Artist agent"
+  execution:
+    version: "1.0.0"
+    tier: required
+    description: "Algorithm execution agent"
+  ops:
+    version: "1.0.0"
+    tier: recommended
+    description: "session-closer agent"
