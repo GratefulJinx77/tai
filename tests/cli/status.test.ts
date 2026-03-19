@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import { resolve } from 'path';
 
 describe('CLI status command', () => {
   it('status module exports a status function', async () => {
@@ -8,7 +9,7 @@ describe('CLI status command', () => {
 
   it('status reads from .tai/ and outputs information', async () => {
     const origCwd = process.cwd;
-    const PROJECT_ROOT = '/home/wbj/alpha-root/builds/tai';
+    const PROJECT_ROOT = resolve(__dirname, '../..');
     process.cwd = () => PROJECT_ROOT;
 
     const origLog = console.log;

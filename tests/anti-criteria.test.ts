@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync, existsSync } from 'fs';
-import { join } from 'path';
+import { join, resolve } from 'path';
 
-const TAI_DIR = '/home/wbj/alpha-root/builds/tai/.tai';
+const TAI_DIR = resolve(__dirname, '../.tai');
 const HOOKS_DIR = join(TAI_DIR, 'hooks');
 const SKILLS_DIR = join(TAI_DIR, 'skills');
 

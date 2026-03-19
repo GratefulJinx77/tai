@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { loadLearningDigest, loadWisdomFrames, loadFailurePatterns, loadSignalTrends } from '../../.tai/hooks/lib/learning-readback';
-import { join } from 'path';
+import { join, resolve } from 'path';
 
-const TAI_DIR = '/home/wbj/alpha-root/builds/tai/.tai';
+const TAI_DIR = resolve(__dirname, '../../.tai');
 
 describe('learning-readback', () => {
   describe('loadLearningDigest', () => {

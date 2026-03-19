@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { resolve } from 'path';
 
 describe('identity module', () => {
   beforeEach(() => {
     vi.resetModules();
-    process.env.TAI_DIR = '/home/wbj/alpha-root/builds/tai/.tai';
+    process.env.TAI_DIR = resolve(__dirname, '../../.tai');
   });
 
   afterEach(() => {

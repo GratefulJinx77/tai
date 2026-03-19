@@ -5,7 +5,7 @@ import { join, dirname } from 'path';
 // The module caches getTaiDir, so we re-import each test via dynamic import
 
 describe('paths module', () => {
-  const PROJECT_ROOT = '/home/wbj/alpha-root/builds/tai';
+  const PROJECT_ROOT = resolve(__dirname, '../..');
   const TAI_DIR = join(PROJECT_ROOT, '.tai');
 
   describe('expandPath', () => {

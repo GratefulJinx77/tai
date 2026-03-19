@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'fs';
-import { join } from 'path';
+import { join, resolve } from 'path';
 
-const TAI_DIR = '/home/wbj/alpha-root/builds/tai/.tai';
+const TAI_DIR = resolve(__dirname, '../../.tai');
 const HOOKS_DIR = join(TAI_DIR, 'hooks');
 
 describe('hook smoke tests', () => {
