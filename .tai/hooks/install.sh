@@ -91,6 +91,61 @@ chmod +x "$TAI_HOOKS"/*.sh 2>/dev/null || true
 chmod +x "$TAI_HOOKS"/*.hook.ts 2>/dev/null || true
 echo "TAI: All hook scripts marked executable."
 
+# ── Install TAI rules file (.claude/rules/tai.md) ─────────────────
+RULES_DIR="$CLAUDE_DIR/rules"
+RULES_FILE="$RULES_DIR/tai.md"
+mkdir -p "$RULES_DIR"
+
+cat > "$RULES_FILE" << 'RULES_EOF'
+# TAI — Team AI Infrastructure
+
+## MANDATORY: Session Initialization
+
+At the START of every session, you MUST perform these steps before responding to the user:
+
+1. Read `.tai/CORE.md` and follow its initialization protocol
+2. Read `.tai/config/team.yaml` — identify the current user by matching `git config user.email`
+3. Read the user's role file from `.tai/roles/{role}.md` (default: dev.md)
+4. Read `.tai/memory/decisions/INDEX.md` — load active team decisions
+5. Read `.tai/memory/state/current.md` — load active sprint and work items
+6. Read `.tai/context/architecture.md`, `.tai/context/boundaries.md`, `.tai/context/patterns.md`
+7. Display the status line as your FIRST output:
+
+```
+── │ TAI │ ──────────────────────────────────
+ENV: TAI:{version from .tai/VERSION} │ Hooks: {count}
+◈ PWD: {project name} │ Branch: {git branch} │ Role: {user role}
+◎ MEMORY: {n} Decisions │ {n} Learnings │ {n} Signals
+◐ SPRINT: {from context/sprint-current.md} │ {n}/{m} ISC
+──────────────────────────────────────────────
+```
+
+Read .tai/VERSION for TAI version. Count .md files in memory/decisions/ (excluding INDEX.md and TEMPLATE.md) for decision count. Read context/sprint-current.md for sprint info.
+
+## Context Recovery
+
+If context is compacted mid-session, re-read:
+- `.tai/memory/decisions/INDEX.md`
+- `.tai/memory/state/current.md`
+- `.tai/context/sprint-current.md`
+
+## Governance
+
+Roles shape context, not restrict access. Every team member can use every skill.
+- **Dev** — Default. Full access.
+- **QA** — Quality-focused context.
+- **Pub** — Content/public-facing context.
+- **Admin** — Activated via `/tai-admin`. Enables TAI config changes.
+
+## Reference
+
+- Full protocol: `.tai/CORE.md`
+- Topic routing: `.tai/CONTEXT_ROUTING.md`
+- Work tracking: `.tai/PRDFORMAT.md`
+RULES_EOF
+
+echo "TAI: Installed rules file: $RULES_FILE"
+
 # ── Install git hooks (symlinks) ─────────────────────────────────
 if [ -d "$GIT_HOOKS" ]; then
     for hook in pre-commit pre-push; do
