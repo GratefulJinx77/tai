@@ -1,21 +1,27 @@
-# Sprint 0: TAI Setup
+# Sprint 32: Sales Leader Dashboard
 
 ## Dates: TBD
-## Objectives:
-- Configure TAI for this project
-- Define team roles and boundaries
-- Establish code patterns and conventions
-- Create first sprint plan with ISC
 
-## ISC (Ideal State Criteria):
-- [ ] team.yaml populated with all team members and roles
-- [ ] boundaries.md defines forbidden import paths
-- [ ] patterns.md documents code conventions
-- [ ] architecture.md describes system structure
-- [ ] All hooks installed and passing
-- [ ] First real sprint planned with ISC criteria
+## Objectives
+- Pipeline visibility and team metrics for sales leadership
+- Cross-user read access for SalesLead role
+- Date range filtering and aggregation
 
-## Task Assignments:
-- Architect: Configure TAI, define boundaries, establish patterns
-- Developer: Review patterns, confirm skill workflows match project
-- QA: Validate hook enforcement, verify boundary rules work
+## Dependencies
+- Sprint 26 (Sales role)
+- Sprint 27 (handoff workflow)
+
+## ISC (Ideal State Criteria)
+- [ ] ISC-1: SalesLead role added or Admin role used for leadership views
+- [ ] ISC-2: Dashboard page shows active scopes by commercial stage
+- [ ] ISC-3: Dashboard page shows average time-to-ROM metric
+- [ ] ISC-4: Dashboard page shows assumed-answer rates by salesperson
+- [ ] ISC-5: Dashboard page shows scope value pipeline by stage
+- [ ] ISC-6: Dashboard page shows team activity (sessions, docs this period)
+- [ ] ISC-7: Dashboard page shows engagement type distribution
+- [ ] ISC-8: Dashboard queries use cross-user read access for SalesLead
+- [ ] ISC-9: Dashboard respects data aggregation (no individual deal details)
+- [ ] ISC-10: Date range filter works (week/month/quarter/custom)
+
+## Task Assignments
+- TBD
