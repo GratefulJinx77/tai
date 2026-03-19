@@ -262,19 +262,21 @@ if [ -f "$SPRINT_FILE" ] && ! grep -q "Sprint 0: TAI Setup" "$SPRINT_FILE" 2>/de
 fi
 
 # Source 2: Project CLAUDE.md (look for "Next: Sprint N" or "Sprint N is next")
-if [ -z "$SPRINT_NAME" ] && [ -f "$REPO_ROOT/CLAUDE.md" ]; then
+# Use current_dir from Claude Code input (not REPO_ROOT which may be submodule)
+PROJECT_DIR="${current_dir:-$REPO_ROOT}"
+if [ -z "$SPRINT_NAME" ] && [ -f "$PROJECT_DIR/CLAUDE.md" ]; then
     # Match patterns like "Next: Sprint 32" or "Sprint 32 is next" or "next sprint: Sprint 32"
-    SPRINT_NAME=$(grep -ioE '(next[: ]+sprint [0-9]+[^.]*|sprint [0-9]+[^.]*is next)' "$REPO_ROOT/CLAUDE.md" 2>/dev/null | head -1 | sed 's/[Nn]ext[: ]*//')
+    SPRINT_NAME=$(grep -ioE '(next[: ]+sprint [0-9]+[^.]*|sprint [0-9]+[^.]*is next)' "$PROJECT_DIR/CLAUDE.md" 2>/dev/null | head -1 | sed 's/[Nn]ext[: ]*//')
     # Also try "Sprint progress:... Next: Sprint N"
     if [ -z "$SPRINT_NAME" ]; then
-        SPRINT_NAME=$(grep -ioE 'Next: Sprint [0-9]+' "$REPO_ROOT/CLAUDE.md" 2>/dev/null | head -1 | sed 's/Next: //')
+        SPRINT_NAME=$(grep -ioE 'Next: Sprint [0-9]+' "$PROJECT_DIR/CLAUDE.md" 2>/dev/null | head -1 | sed 's/Next: //')
     fi
 fi
 
 # Source 3: CHANGELOG.md (latest version = current sprint)
-if [ -z "$SPRINT_NAME" ] && [ -f "$REPO_ROOT/CHANGELOG.md" ]; then
+if [ -z "$SPRINT_NAME" ] && [ -f "$PROJECT_DIR/CHANGELOG.md" ]; then
     # Get the first sprint reference from changelog
-    SPRINT_NAME=$(grep -ioE 'Sprint [0-9]+' "$REPO_ROOT/CHANGELOG.md" 2>/dev/null | head -1)
+    SPRINT_NAME=$(grep -ioE 'Sprint [0-9]+' "$PROJECT_DIR/CHANGELOG.md" 2>/dev/null | head -1)
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────
