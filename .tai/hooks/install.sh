@@ -146,6 +146,57 @@ RULES_EOF
 
 echo "TAI: Installed rules file: $RULES_FILE"
 
+# ── Install slash commands (.claude/commands/) ────────────────────
+COMMANDS_DIR="$CLAUDE_DIR/commands"
+mkdir -p "$COMMANDS_DIR"
+
+cat > "$COMMANDS_DIR/tai-validate.md" << 'CMD_EOF'
+---
+description: "Validate TAI installation — checks all components"
+allowed-tools: [Bash, Read, Glob, Grep]
+---
+
+Read `.tai/skills/core/tai-validate.md` and follow its instructions exactly. Run all validation checks and display the summary table.
+CMD_EOF
+
+cat > "$COMMANDS_DIR/tai-admin.md" << 'CMD_EOF'
+---
+description: "Switch to TAI Admin mode for system configuration"
+allowed-tools: [Bash, Read, Edit, Write, Glob, Grep]
+---
+
+Read `.tai/skills/core/tai-admin.md` and follow its instructions exactly.
+CMD_EOF
+
+cat > "$COMMANDS_DIR/tai-sprint.md" << 'CMD_EOF'
+---
+description: "Show current sprint status and ISC progress"
+allowed-tools: [Bash, Read]
+---
+
+Read `.tai/context/sprint-current.md` and display the sprint name, dates, objectives, and ISC progress (count checked vs unchecked checkboxes). Format as a clean status display.
+CMD_EOF
+
+cat > "$COMMANDS_DIR/tai-decisions.md" << 'CMD_EOF'
+---
+description: "Show active team decisions"
+allowed-tools: [Read, Glob]
+---
+
+Read `.tai/memory/decisions/INDEX.md` and list all active decisions. For each, show the date and one-line summary.
+CMD_EOF
+
+cat > "$COMMANDS_DIR/tai-health.md" << 'CMD_EOF'
+---
+description: "Show project health — hooks, boundaries, test status"
+allowed-tools: [Bash, Read, Glob, Grep]
+---
+
+Read `.tai/skills/core/query/tai-health.md` if it exists. Otherwise: run the project's test command from `.tai/config/project.yaml`, check git hook status, count boundary violations in `.tai/telemetry/boundaries.jsonl`, and report results.
+CMD_EOF
+
+echo "TAI: Installed slash commands: /tai-validate, /tai-admin, /tai-sprint, /tai-decisions, /tai-health"
+
 # ── Install git hooks (symlinks) ─────────────────────────────────
 if [ -d "$GIT_HOOKS" ]; then
     for hook in pre-commit pre-push; do
