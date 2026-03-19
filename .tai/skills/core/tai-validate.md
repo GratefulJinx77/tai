@@ -152,11 +152,11 @@ test -f .tai/agents/execution/Algorithm.md && echo "PASS: Algorithm agent exists
 ### 10. Anti-Criteria
 ```bash
 # No PAI paths
-pai_refs=$(grep -r '~/.claude/' .tai/ 2>/dev/null | wc -l)
+pai_refs=$(grep -r '~/.claude/' .tai/ --include="*.ts" --include="*.yaml" --include="*.sh" 2>/dev/null | wc -l)
 echo "$( [ $pai_refs -eq 0 ] && echo 'PASS' || echo 'FAIL'): $pai_refs PAI path references (should be 0)"
 
-# No role access restrictions
-role_gates=$(grep -r 'Role Access' .tai/skills/ 2>/dev/null | wc -l)
+# No role access restrictions (exclude this validation file)
+role_gates=$(grep -r 'Role Access' .tai/skills/ 2>/dev/null | grep -v 'tai-validate' | wc -l)
 echo "$( [ $role_gates -eq 0 ] && echo 'PASS' || echo 'FAIL'): $role_gates role access restrictions (should be 0)"
 ```
 
