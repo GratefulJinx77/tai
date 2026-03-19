@@ -246,15 +246,35 @@ if [ -n "$session_id" ]; then
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SPRINT INFO from context/sprint-current.md
+# SPRINT INFO — auto-detect from project sources
+# Priority: 1) sprint-current.md  2) CLAUDE.md  3) CHANGELOG.md
 # ─────────────────────────────────────────────────────────────────────────────
 SPRINT_NAME=""
-SPRINT_ISC=""
-if [ -f "$SPRINT_FILE" ]; then
-    # Look for sprint name/number in the file
+SPRINT_ISC_PROGRESS=""
+
+# Source 1: TAI sprint-current.md (if populated, not template)
+if [ -f "$SPRINT_FILE" ] && ! grep -q "Sprint 0: TAI Setup" "$SPRINT_FILE" 2>/dev/null; then
     SPRINT_NAME=$(grep -iE '^#.*sprint|^sprint' "$SPRINT_FILE" 2>/dev/null | head -1 | sed 's/^#* *//')
-    # Look for ISC progress (e.g., "ISC: 12/15" or "12/15 ISC")
-    SPRINT_ISC=$(grep -ioE '[0-9]+/[0-9]+ ISC|ISC:?\s*[0-9]+/[0-9]+' "$SPRINT_FILE" 2>/dev/null | head -1)
+    # Count ISC checkboxes
+    total=$(grep -cE '^\s*- \[[ x]\]' "$SPRINT_FILE" 2>/dev/null || echo 0)
+    done=$(grep -cE '^\s*- \[x\]' "$SPRINT_FILE" 2>/dev/null || echo 0)
+    [ "$total" -gt 0 ] && SPRINT_ISC_PROGRESS="${done}/${total} ISC"
+fi
+
+# Source 2: Project CLAUDE.md (look for "Next: Sprint N" or "Sprint N is next")
+if [ -z "$SPRINT_NAME" ] && [ -f "$REPO_ROOT/CLAUDE.md" ]; then
+    # Match patterns like "Next: Sprint 32" or "Sprint 32 is next" or "next sprint: Sprint 32"
+    SPRINT_NAME=$(grep -ioE '(next[: ]+sprint [0-9]+[^.]*|sprint [0-9]+[^.]*is next)' "$REPO_ROOT/CLAUDE.md" 2>/dev/null | head -1 | sed 's/[Nn]ext[: ]*//')
+    # Also try "Sprint progress:... Next: Sprint N"
+    if [ -z "$SPRINT_NAME" ]; then
+        SPRINT_NAME=$(grep -ioE 'Next: Sprint [0-9]+' "$REPO_ROOT/CLAUDE.md" 2>/dev/null | head -1 | sed 's/Next: //')
+    fi
+fi
+
+# Source 3: CHANGELOG.md (latest version = current sprint)
+if [ -z "$SPRINT_NAME" ] && [ -f "$REPO_ROOT/CHANGELOG.md" ]; then
+    # Get the first sprint reference from changelog
+    SPRINT_NAME=$(grep -ioE 'Sprint [0-9]+' "$REPO_ROOT/CHANGELOG.md" 2>/dev/null | head -1)
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -529,7 +549,7 @@ CTX_BUCKET_EMPTY='\033[38;2;75;82;95m'
 # Sprint (teal theme)
 SPRINT_PRIMARY='\033[38;2;20;184;166m'
 SPRINT_VALUE='\033[38;2;94;234;212m'
-SPRINT_ISC='\033[38;2;45;212;191m'
+SPRINT_ISC_CLR='\033[38;2;45;212;191m'
 
 # Quote (gold theme)
 QUOTE_PRIMARY='\033[38;2;252;211;77m'
@@ -873,7 +893,7 @@ if [ -n "$SPRINT_NAME" ]; then
             ;;
         micro)
             printf "${SPRINT_PRIMARY}*${RESET} ${SPRINT_VALUE}${SPRINT_NAME}${RESET}"
-            [ -n "$SPRINT_ISC" ] && printf " ${SPRINT_ISC}${SPRINT_ISC}${RESET}"
+            [ -n "$SPRINT_ISC_PROGRESS" ] && printf " ${SPRINT_ISC_CLR}${SPRINT_ISC_PROGRESS}${RESET}"
             printf "\n"
             ;;
         mini)
