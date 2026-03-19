@@ -1,41 +1,45 @@
 # TAI — Team AI Infrastructure
 
-A team alignment tool for AI-assisted development. TAI gives every team member a shared brain: consistent context, shared memory, and team conventions — loaded automatically at every session start.
+A team alignment tool for AI-assisted development. Shared brain: consistent context, shared memory, team conventions.
 
-TAI is not enforcement or surveillance. It is shared context that keeps the team aligned.
+## MANDATORY: Session Initialization
 
-## How It Works
+At the START of every session, you MUST:
 
-When Claude Code starts in a TAI-enabled project, `.tai/CORE.md` activates:
-1. Identifies the team member via git email
-2. Loads role context (Dev, QA, Pub, or Admin)
-3. Loads team memory (decisions, learnings, current work state)
-4. Loads project context (architecture, boundaries, patterns)
-5. Verifies hooks are installed
-6. Displays status line
-
-See `.tai/CORE.md` for the full session initialization protocol.
-
-## Structure
+1. Read `.tai/CORE.md` and follow its initialization protocol
+2. Read `.tai/config/team.yaml` — identify the current user by matching `git config user.email`
+3. Read the user's role file from `.tai/roles/{role}.md` (default: dev.md)
+4. Read `.tai/memory/decisions/INDEX.md` — load active team decisions
+5. Read `.tai/memory/state/current.md` — load active sprint and work items
+6. Read `.tai/context/architecture.md`, `.tai/context/boundaries.md`, `.tai/context/patterns.md`
+7. Display the status line as your FIRST output:
 
 ```
-.tai/
-├── CORE.md              # Session initialization protocol
-├── VERSION              # 2.0.0
-├── CONTEXT_ROUTING.md   # Topic-to-file mapping
-├── PRDFORMAT.md         # Work tracking format (ISC criteria)
-├── status-line.md       # Rich status display spec
-├── config/              # team.yaml, project.yaml, models.yaml
-├── context/             # architecture.md, boundaries.md, patterns.md, sprint-current.md
-├── hooks/               # Enforcement hooks + config.yaml
-├── roles/               # dev.md, qa.md, pub.md, admin.md
-├── skills/              # Workflow definitions (core/, development/, quality/, ...)
-├── agents/              # AI agents (core/, research/, security/, ...)
-├── memory/              # Shared team memory (decisions/, learnings/, state/, signals/, failures/)
-├── agent-memory/        # Agent-specific memory
-├── packages.yaml        # Skill/agent package registry
-├── telemetry/           # JSONL logs
-└── templates/           # PR description, sprint ISC, boundary examples
+── │ TAI │ ──────────────────────────────────
+ENV: TAI:{version from .tai/VERSION} │ Hooks: {count from hooks/config.yaml}
+◈ PWD: {project name} │ Branch: {git branch} │ Role: {user role}
+◎ MEMORY: {n} Decisions │ {n} Learnings │ {n} Signals
+◐ SPRINT: {from context/sprint-current.md} │ {n}/{m} ISC
+──────────────────────────────────────────────
 ```
 
-See `.tai/CONTEXT_ROUTING.md` for topic-to-file mapping.
+## Context Recovery
+
+If context is compacted mid-session, re-read:
+- `.tai/memory/decisions/INDEX.md`
+- `.tai/memory/state/current.md`
+- `.tai/context/sprint-current.md`
+
+## Governance
+
+Roles shape context, not restrict access. Every team member can use every skill.
+- **Dev** — Default. Full access.
+- **QA** — Quality-focused context.
+- **Pub** — Content/public-facing context.
+- **Admin** — Activated via `/tai-admin`. Enables TAI config changes.
+
+## Reference
+
+- Full protocol: `.tai/CORE.md`
+- Topic routing: `.tai/CONTEXT_ROUTING.md`
+- Work tracking: `.tai/PRDFORMAT.md`
