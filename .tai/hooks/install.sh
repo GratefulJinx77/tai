@@ -240,11 +240,17 @@ for event, matchers in template.get('hooks', {}).items():
 # Merge hooks into existing settings
 settings['hooks'] = filtered_hooks
 
+# Add statusLine configuration
+settings['statusLine'] = {
+    'type': 'command',
+    'command': '.tai/hooks/statusline-command.sh'
+}
+
 with open('$SETTINGS_FILE', 'w') as f:
     json.dump(settings, f, indent=2)
     f.write('\n')
 
-print(f'TAI: Merged {len(filtered_hooks)} hook events into {sys.argv[0] if len(sys.argv) > 0 else \"settings.local.json\"}')" 2>/dev/null
+print(f'TAI: Merged {len(filtered_hooks)} hook events + statusLine into {sys.argv[0] if len(sys.argv) > 0 else \"settings.local.json\"}')" 2>/dev/null
             echo "TAI: Claude Code hooks registered in $SETTINGS_FILE"
         else
             # Fallback: just copy the template as the hooks section
@@ -277,14 +283,19 @@ for event, matchers in template.get('hooks', {}).items():
     if filtered_matchers:
         filtered_hooks[event] = filtered_matchers
 
-settings = {'hooks': filtered_hooks}
+settings = {
+    'hooks': filtered_hooks,
+    'statusLine': {
+        'type': 'command',
+        'command': '.tai/hooks/statusline-command.sh'
+    }
+}
 
-# Remove schema and comment from output
 with open('$SETTINGS_FILE', 'w') as f:
     json.dump(settings, f, indent=2)
     f.write('\n')
 
-print(f'TAI: Created {\"$SETTINGS_FILE\"} with {len(filtered_hooks)} hook events')" 2>/dev/null
+print(f'TAI: Created {\"$SETTINGS_FILE\"} with {len(filtered_hooks)} hook events + statusLine')" 2>/dev/null
         else
             cp "$TEMPLATE" "$SETTINGS_FILE"
             echo "TAI: Claude Code hooks written to $SETTINGS_FILE"
