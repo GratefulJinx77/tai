@@ -1,30 +1,51 @@
 #!/usr/bin/env bash
-# TAI Hook Installer
+# TAI Hook Installer — Framework vs Instance Architecture
 #
-# Installs both git hooks (symlinks) and Claude Code hooks (settings.local.json).
-# Reads config.yaml to determine which hooks to install based on tier.
+# TAI separates FRAMEWORK (code in the submodule) from INSTANCE (project data).
+#
+# FRAMEWORK (submodule — updates via git pull):
+#   hooks/, skills/, agents/, CORE.md, PRDFORMAT.md, VERSION, templates/
+#
+# INSTANCE (project root — never overwritten by updates):
+#   .tai/config/     — team.yaml, project.yaml, models.yaml
+#   .tai/context/    — architecture.md, boundaries.md, patterns.md, sprint-current.md
+#   .tai/memory/     — decisions/, learnings/, state/, signals/, failures/
+#   .claude/         — rules/tai.md, commands/*.md, settings.local.json
 #
 # Usage:
-#   ./install.sh              # Install required + recommended hooks
-#   ./install.sh --minimal    # Install required hooks only
-#   ./install.sh --all        # Install all hooks (required + recommended + optional)
-#   ./install.sh --list       # List all hooks and their tiers
+#   .tai-upstream/.tai/hooks/install.sh              # Install required + recommended
+#   .tai-upstream/.tai/hooks/install.sh --minimal     # Required hooks only
+#   .tai-upstream/.tai/hooks/install.sh --all         # All hooks including optional
+#   .tai-upstream/.tai/hooks/install.sh --list        # List all hooks and tiers
 
 set -euo pipefail
 
-REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-TAI_DIR="$REPO_ROOT/.tai"
-TAI_HOOKS="$TAI_DIR/hooks"
-GIT_HOOKS="$REPO_ROOT/.git/hooks"
-CONFIG="$TAI_HOOKS/config.yaml"
-TEMPLATE="$TAI_HOOKS/settings-template.json"
+# ── Detect paths ─────────────────────────────────────────────────
+# FRAMEWORK_DIR = where this script lives (the submodule)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+FRAMEWORK_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# REPO_ROOT = the actual project root
+REPO_ROOT="$(cd "$FRAMEWORK_DIR" && git rev-parse --show-superproject-working-tree 2>/dev/null || git rev-parse --show-toplevel 2>/dev/null || pwd)"
+# If we're in a submodule, show-superproject-working-tree gives us the parent project
+# If not a submodule, show-toplevel gives us the repo root
+
+# FRAMEWORK_REL = relative path from REPO_ROOT to FRAMEWORK_DIR
+FRAMEWORK_REL="$(python3 -c "import os; print(os.path.relpath('$FRAMEWORK_DIR', '$REPO_ROOT'))" 2>/dev/null || echo ".tai")"
+
+# Instance directories (project-owned)
+INSTANCE_DIR="$REPO_ROOT/.tai"
 CLAUDE_DIR="$REPO_ROOT/.claude"
+GIT_HOOKS="$REPO_ROOT/.git/hooks"
+
+# Framework files
+CONFIG="$FRAMEWORK_DIR/hooks/config.yaml"
+TEMPLATE="$FRAMEWORK_DIR/hooks/settings-template.json"
 SETTINGS_FILE="$CLAUDE_DIR/settings.local.json"
 
-if [ ! -d "$TAI_HOOKS" ]; then
-    echo "TAI: Hook directory not found at $TAI_HOOKS"
-    exit 1
-fi
+echo "TAI: Framework at: $FRAMEWORK_REL"
+echo "TAI: Project at:   $REPO_ROOT"
+echo ""
 
 if [ ! -f "$CONFIG" ]; then
     echo "TAI: Hook config not found at $CONFIG"
@@ -43,7 +64,6 @@ if [ "$MODE" = "--list" ]; then
     current_hook=""
     current_category=""
     while IFS= read -r line; do
-        # Category headers (memory:, git:, workflow:, optional:)
         if echo "$line" | grep -qE '^  (memory|git|workflow|optional):$'; then
             current_category=$(echo "$line" | sed 's/://;s/^ *//')
         fi
@@ -86,17 +106,116 @@ case "$MODE" in
         ;;
 esac
 
-# ── Make all hook scripts executable ──────────────────────────────
-chmod +x "$TAI_HOOKS"/*.sh 2>/dev/null || true
-chmod +x "$TAI_HOOKS"/*.hook.ts 2>/dev/null || true
-echo "TAI: All hook scripts marked executable."
+# ── Make framework hook scripts executable ────────────────────────
+chmod +x "$FRAMEWORK_DIR/hooks/"*.sh 2>/dev/null || true
+chmod +x "$FRAMEWORK_DIR/hooks/"*.hook.ts 2>/dev/null || true
 
-# ── Install TAI rules file (.claude/rules/tai.md) ─────────────────
+# ── Scaffold instance directory (project-owned, never overwrite) ──
+echo "TAI: Scaffolding project instance files..."
+
+# Config — copy templates only if files don't exist
+mkdir -p "$INSTANCE_DIR/config"
+for cfg in team.yaml project.yaml models.yaml; do
+    if [ ! -f "$INSTANCE_DIR/config/$cfg" ]; then
+        if [ -f "$FRAMEWORK_DIR/config/$cfg" ]; then
+            cp "$FRAMEWORK_DIR/config/$cfg" "$INSTANCE_DIR/config/$cfg"
+            echo "TAI: Created config/$cfg (from template)"
+        fi
+    else
+        echo "TAI: config/$cfg exists (not overwritten)"
+    fi
+done
+
+# Context — copy templates only if files don't exist
+mkdir -p "$INSTANCE_DIR/context"
+for ctx in architecture.md boundaries.md patterns.md sprint-current.md; do
+    if [ ! -f "$INSTANCE_DIR/context/$ctx" ]; then
+        if [ -f "$FRAMEWORK_DIR/context/$ctx" ]; then
+            cp "$FRAMEWORK_DIR/context/$ctx" "$INSTANCE_DIR/context/$ctx"
+            echo "TAI: Created context/$ctx (from template)"
+        fi
+    else
+        echo "TAI: context/$ctx exists (not overwritten)"
+    fi
+done
+
+# Memory — create directories + copy templates only if missing
+mkdir -p "$INSTANCE_DIR/memory/decisions"
+mkdir -p "$INSTANCE_DIR/memory/learnings"
+mkdir -p "$INSTANCE_DIR/memory/state"
+mkdir -p "$INSTANCE_DIR/memory/signals"
+mkdir -p "$INSTANCE_DIR/memory/failures"
+
+for mem in decisions/INDEX.md decisions/TEMPLATE.md learnings/summary.md state/current.md; do
+    if [ ! -f "$INSTANCE_DIR/memory/$mem" ]; then
+        if [ -f "$FRAMEWORK_DIR/memory/$mem" ]; then
+            cp "$FRAMEWORK_DIR/memory/$mem" "$INSTANCE_DIR/memory/$mem"
+            echo "TAI: Created memory/$mem (from template)"
+        fi
+    fi
+done
+
+# Memory README
+if [ ! -f "$INSTANCE_DIR/memory/README.md" ] && [ -f "$FRAMEWORK_DIR/memory/README.md" ]; then
+    cp "$FRAMEWORK_DIR/memory/README.md" "$INSTANCE_DIR/memory/README.md"
+fi
+
+# Roles — copy from framework
+mkdir -p "$INSTANCE_DIR/roles"
+for role in dev.md qa.md pub.md admin.md; do
+    if [ ! -f "$INSTANCE_DIR/roles/$role" ]; then
+        if [ -f "$FRAMEWORK_DIR/roles/$role" ]; then
+            cp "$FRAMEWORK_DIR/roles/$role" "$INSTANCE_DIR/roles/$role"
+            echo "TAI: Created roles/$role (from template)"
+        fi
+    fi
+done
+
+# .gitignore for selective memory tracking
+if [ ! -f "$INSTANCE_DIR/.gitignore" ]; then
+    cat > "$INSTANCE_DIR/.gitignore" << 'GITIGNORE_EOF'
+# Decisions are committed (shared team knowledge)
+# Everything else is ephemeral
+
+# Ephemeral memory
+memory/learnings/*.jsonl
+memory/signals/*.jsonl
+memory/failures/
+memory/state/pre-compact-*.json
+memory/state/session-*.json
+memory/state/work.json
+memory/state/model-cache.txt
+memory/state/session-name-cache.sh
+memory/state/*.bak
+memory/state/system-counts.json
+memory/state/tai-metrics.json
+memory/state/counts-cache.sh
+memory/state/last-response.txt
+
+# Agent memory (per-machine)
+agent-memory/
+GITIGNORE_EOF
+    echo "TAI: Created .gitignore (decisions committed, ephemera ignored)"
+fi
+
+# Symlink framework references so .tai/hooks, .tai/skills, .tai/agents resolve
+# These let paths like .tai/hooks/LoadContext.hook.ts work from the project root
+for dir in hooks skills agents CORE.md PRDFORMAT.md CONTEXT_ROUTING.md VERSION status-line.md packages.yaml templates docs; do
+    TARGET="$INSTANCE_DIR/$dir"
+    SOURCE="$FRAMEWORK_DIR/$dir"
+    if [ -e "$SOURCE" ] && [ ! -e "$TARGET" ]; then
+        ln -sf "$SOURCE" "$TARGET"
+        echo "TAI: Linked $dir → framework"
+    fi
+done
+
+echo ""
+
+# ── Install Claude Code rules file ───────────────────────────────
 RULES_DIR="$CLAUDE_DIR/rules"
-RULES_FILE="$RULES_DIR/tai.md"
 mkdir -p "$RULES_DIR"
 
-cat > "$RULES_FILE" << 'RULES_EOF'
+cat > "$RULES_DIR/tai.md" << 'RULES_EOF'
 # TAI — Team AI Infrastructure
 
 ## MANDATORY: Session Initialization
@@ -120,8 +239,6 @@ ENV: TAI:{version from .tai/VERSION} │ Hooks: {count}
 ──────────────────────────────────────────────
 ```
 
-Read .tai/VERSION for TAI version. Count .md files in memory/decisions/ (excluding INDEX.md and TEMPLATE.md) for decision count. Read context/sprint-current.md for sprint info.
-
 ## Context Recovery
 
 If context is compacted mid-session, re-read:
@@ -136,17 +253,11 @@ Roles shape context, not restrict access. Every team member can use every skill.
 - **QA** — Quality-focused context.
 - **Pub** — Content/public-facing context.
 - **Admin** — Activated via `/tai-admin`. Enables TAI config changes.
-
-## Reference
-
-- Full protocol: `.tai/CORE.md`
-- Topic routing: `.tai/CONTEXT_ROUTING.md`
-- Work tracking: `.tai/PRDFORMAT.md`
 RULES_EOF
 
-echo "TAI: Installed rules file: $RULES_FILE"
+echo "TAI: Installed .claude/rules/tai.md"
 
-# ── Install slash commands (.claude/commands/) ────────────────────
+# ── Install slash commands ────────────────────────────────────────
 COMMANDS_DIR="$CLAUDE_DIR/commands"
 mkdir -p "$COMMANDS_DIR"
 
@@ -197,10 +308,10 @@ CMD_EOF
 
 echo "TAI: Installed slash commands: /tai-validate, /tai-admin, /tai-sprint, /tai-decisions, /tai-health"
 
-# ── Install git hooks (symlinks) ─────────────────────────────────
+# ── Install git hooks (symlinks to framework) ─────────────────────
 if [ -d "$GIT_HOOKS" ]; then
     for hook in pre-commit pre-push; do
-        SOURCE="$TAI_HOOKS/${hook}.sh"
+        SOURCE="$FRAMEWORK_DIR/hooks/${hook}.sh"
         TARGET="$GIT_HOOKS/$hook"
 
         if [ ! -f "$SOURCE" ]; then
@@ -220,14 +331,9 @@ fi
 # ── Register Claude Code hooks ────────────────────────────────────
 echo ""
 echo "TAI: Registering Claude Code hooks..."
-
-# Ensure .claude directory exists
 mkdir -p "$CLAUDE_DIR"
 
-# Build the hooks JSON based on selected tiers
-# We'll parse the settings-template.json and filter by tier from config.yaml
-
-# First, collect which hooks to install based on tier
+# Collect which hooks to install based on tier
 declare -A INSTALL_HOOKS
 
 while IFS= read -r line; do
@@ -249,27 +355,29 @@ while IFS= read -r line; do
     fi
 done < "$CONFIG"
 
-# Now build a filtered settings-template.json
-# We use a simple approach: copy the template but only include hooks that are in INSTALL_HOOKS
-
+# Build settings.local.json with hook paths pointing to framework
+# The .tai/hooks/ symlink resolves to framework, so paths work
 if [ -f "$TEMPLATE" ]; then
-    # Create or merge into settings.local.json
-    if [ -f "$SETTINGS_FILE" ]; then
-        # Read existing settings — merge hooks section
-        # Use python/node if available, fallback to simple replacement
-        if command -v python3 &>/dev/null; then
-            python3 -c "
-import json, sys
+    if command -v python3 &>/dev/null; then
+        python3 -c "
+import json
 
-# Read existing settings
-with open('$SETTINGS_FILE', 'r') as f:
-    settings = json.load(f)
+template_path = '$TEMPLATE'
+settings_path = '$SETTINGS_FILE'
 
 # Read template
-with open('$TEMPLATE', 'r') as f:
+with open(template_path, 'r') as f:
     template = json.load(f)
 
-# Filter hooks based on installed hooks
+# Read existing settings if they exist
+settings = {}
+try:
+    with open(settings_path, 'r') as f:
+        settings = json.load(f)
+except (FileNotFoundError, json.JSONDecodeError):
+    pass
+
+# Filter hooks based on tier
 install_hooks = set('''$(printf '%s\n' "${!INSTALL_HOOKS[@]}")'''.split())
 
 filtered_hooks = {}
@@ -279,7 +387,6 @@ for event, matchers in template.get('hooks', {}).items():
         filtered_commands = []
         for hook in matcher.get('hooks', []):
             cmd = hook.get('command', '')
-            # Extract hook name from command
             hook_name = cmd.split('/')[-1].replace('.hook.ts', '').replace('bun run .tai/hooks/', '')
             if hook_name in install_hooks or not install_hooks:
                 filtered_commands.append(hook)
@@ -288,75 +395,27 @@ for event, matchers in template.get('hooks', {}).items():
     if filtered_matchers:
         filtered_hooks[event] = filtered_matchers
 
-# Merge hooks into existing settings
 settings['hooks'] = filtered_hooks
-
-# Add statusLine configuration
 settings['statusLine'] = {
     'type': 'command',
     'command': '.tai/hooks/statusline-command.sh'
 }
 
-with open('$SETTINGS_FILE', 'w') as f:
+with open(settings_path, 'w') as f:
     json.dump(settings, f, indent=2)
     f.write('\n')
 
-print(f'TAI: Merged {len(filtered_hooks)} hook events + statusLine into {sys.argv[0] if len(sys.argv) > 0 else \"settings.local.json\"}')" 2>/dev/null
-            echo "TAI: Claude Code hooks registered in $SETTINGS_FILE"
-        else
-            # Fallback: just copy the template as the hooks section
-            cp "$TEMPLATE" "$SETTINGS_FILE"
-            echo "TAI: Claude Code hooks written to $SETTINGS_FILE (full template — install python3 for filtered merge)"
-        fi
+print(f'TAI: Registered {len(filtered_hooks)} hook events + statusLine')
+" 2>/dev/null
     else
-        # No existing settings — create from filtered template
-        if command -v python3 &>/dev/null; then
-            python3 -c "
-import json
-
-with open('$TEMPLATE', 'r') as f:
-    template = json.load(f)
-
-install_hooks = set('''$(printf '%s\n' "${!INSTALL_HOOKS[@]}")'''.split())
-
-filtered_hooks = {}
-for event, matchers in template.get('hooks', {}).items():
-    filtered_matchers = []
-    for matcher in matchers:
-        filtered_commands = []
-        for hook in matcher.get('hooks', []):
-            cmd = hook.get('command', '')
-            hook_name = cmd.split('/')[-1].replace('.hook.ts', '').replace('bun run .tai/hooks/', '')
-            if hook_name in install_hooks or not install_hooks:
-                filtered_commands.append(hook)
-        if filtered_commands:
-            filtered_matchers.append({**matcher, 'hooks': filtered_commands})
-    if filtered_matchers:
-        filtered_hooks[event] = filtered_matchers
-
-settings = {
-    'hooks': filtered_hooks,
-    'statusLine': {
-        'type': 'command',
-        'command': '.tai/hooks/statusline-command.sh'
-    }
-}
-
-with open('$SETTINGS_FILE', 'w') as f:
-    json.dump(settings, f, indent=2)
-    f.write('\n')
-
-print(f'TAI: Created {\"$SETTINGS_FILE\"} with {len(filtered_hooks)} hook events + statusLine')" 2>/dev/null
-        else
-            cp "$TEMPLATE" "$SETTINGS_FILE"
-            echo "TAI: Claude Code hooks written to $SETTINGS_FILE"
-        fi
+        cp "$TEMPLATE" "$SETTINGS_FILE"
+        echo "TAI: Claude Code hooks written (install python3 for filtered merge)"
     fi
 else
-    echo "TAI: Warning — settings-template.json not found. Claude Code hooks not registered."
+    echo "TAI: Warning — settings-template.json not found"
 fi
 
-# ── Count installed hooks ─────────────────────────────────────────
+# ── Count and report ──────────────────────────────────────────────
 REQUIRED=0
 RECOMMENDED=0
 OPTIONAL=0
@@ -387,16 +446,26 @@ while IFS= read -r line; do
 done < "$CONFIG"
 
 echo ""
-echo "TAI: Installation complete."
-echo "  Required:      $REQUIRED hooks (always installed)"
-echo "  Recommended:   $RECOMMENDED hooks (installed by default)"
-echo "  Optional:      $OPTIONAL hooks (use --all to install)"
-echo "  Total active:  $INSTALLED hooks"
+echo "═══════════════════════════════════════════════════"
+echo "  TAI v$(cat "$FRAMEWORK_DIR/VERSION" 2>/dev/null || echo "?.?.?") Installation Complete"
+echo "═══════════════════════════════════════════════════"
 echo ""
+echo "  Framework:     $FRAMEWORK_REL (submodule)"
+echo "  Instance:      .tai/ (project-owned, safe from updates)"
+echo ""
+echo "  Hooks:         $INSTALLED active ($REQUIRED required, $RECOMMENDED recommended, $OPTIONAL optional)"
 echo "  Git hooks:     .git/hooks/ (pre-commit, pre-push)"
-echo "  Claude hooks:  $SETTINGS_FILE"
+echo "  Claude hooks:  .claude/settings.local.json"
+echo "  Rules:         .claude/rules/tai.md"
+echo "  Commands:      /tai-validate, /tai-admin, /tai-sprint, /tai-decisions, /tai-health"
 echo ""
-echo "TAI: Run './install.sh --list' to see all available hooks."
-echo "TAI: Run './install.sh --all' to include optional hooks (Kitty, voice, ratings)."
+echo "  Next steps:"
+echo "    1. Edit .tai/config/team.yaml — add team members"
+echo "    2. Edit .tai/context/ files — describe your architecture"
+echo "    3. Launch claude"
+echo ""
+echo "  Submodule updates (git pull in $FRAMEWORK_REL) will NEVER"
+echo "  overwrite your config, context, or memory files."
+echo ""
 
 exit 0
