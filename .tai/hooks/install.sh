@@ -63,12 +63,18 @@ if [ "$MODE" = "--list" ]; then
 
     current_hook=""
     current_category=""
+    tier=""
+    event=""
     while IFS= read -r line; do
-        if echo "$line" | grep -qE '^  (memory|git|workflow|optional):$'; then
-            current_category=$(echo "$line" | sed 's/://;s/^ *//')
+        # Category from comment headers (e.g., "  # ─── Memory Hooks")
+        if echo "$line" | grep -qE '^  #.*Hooks'; then
+            current_category=$(echo "$line" | sed 's/.*# [─ ]*//' | sed 's/ Hooks.*//' | sed 's/(.*)//' | tr '[:upper:]' '[:lower:]' | xargs)
         fi
-        if echo "$line" | grep -qE '^    - name:'; then
-            current_hook=$(echo "$line" | sed 's/.*name: *//')
+        # Hook name = map key at 2-space indent (e.g., "  LoadContext:")
+        if echo "$line" | grep -qE '^  [A-Za-z][A-Za-z0-9_-]*:$'; then
+            current_hook=$(echo "$line" | sed 's/://;s/^ *//')
+            tier=""
+            event=""
         fi
         if [ -n "$current_hook" ]; then
             if echo "$line" | grep -qE '^\s+tier:'; then
@@ -76,6 +82,9 @@ if [ "$MODE" = "--list" ]; then
             fi
             if echo "$line" | grep -qE '^\s+event:'; then
                 event=$(echo "$line" | sed 's/.*event: *//')
+            fi
+            # Print when we have all fields (event is last required field)
+            if [ -n "$tier" ] && [ -n "$event" ]; then
                 printf "  %-25s %-15s %-20s %s\n" "$current_hook" "$tier" "$event" "$current_category"
                 current_hook=""
                 tier=""
@@ -367,9 +376,11 @@ mkdir -p "$CLAUDE_DIR"
 # Collect which hooks to install based on tier
 declare -A INSTALL_HOOKS
 
+current_hook=""
 while IFS= read -r line; do
-    if echo "$line" | grep -qE '^    - name:'; then
-        current_hook=$(echo "$line" | sed 's/.*name: *//')
+    # Hook name = map key at 2-space indent
+    if echo "$line" | grep -qE '^  [A-Za-z][A-Za-z0-9_-]*:$'; then
+        current_hook=$(echo "$line" | sed 's/://;s/^ *//')
     fi
     if [ -n "${current_hook:-}" ] && echo "$line" | grep -qE '^\s+tier:'; then
         tier=$(echo "$line" | sed 's/.*tier: *//')
@@ -452,9 +463,11 @@ RECOMMENDED=0
 OPTIONAL=0
 INSTALLED=0
 
+current_hook=""
 while IFS= read -r line; do
-    if echo "$line" | grep -qE '^    - name:'; then
-        current_hook=$(echo "$line" | sed 's/.*name: *//')
+    # Hook name = map key at 2-space indent
+    if echo "$line" | grep -qE '^  [A-Za-z][A-Za-z0-9_-]*:$'; then
+        current_hook=$(echo "$line" | sed 's/://;s/^ *//')
     fi
     if [ -n "${current_hook:-}" ] && echo "$line" | grep -qE '^\s+tier:'; then
         tier=$(echo "$line" | sed 's/.*tier: *//')

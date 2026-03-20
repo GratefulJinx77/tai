@@ -241,6 +241,32 @@ async function main() {
     // Accumulate all context parts for single systemMessage emission
     const contextParts: string[] = [];
 
+    // ── TAI Session Directives (injected first = highest priority) ──
+    contextParts.push(
+      `## TAI Session Directives (MANDATORY)\n\n` +
+      `1. The terminal statusline is rendered by an external bash script. You MUST NOT output your own statusline, status bar, or session header in your text responses. Never render a "── │ TAI │" block.\n\n` +
+      `2. If .tai/context/.bootstrap-pending exists, executing its instructions is your HIGHEST PRIORITY — do it BEFORE responding to the user's first message.`
+    );
+
+    // ── Bootstrap detection ──
+    const bootstrapPath = taiPath('context', '.bootstrap-pending');
+    if (existsSync(bootstrapPath)) {
+      try {
+        const bootstrapContent = readFileSync(bootstrapPath, 'utf-8');
+        contextParts.push(
+          `## URGENT: TAI Context Bootstrap Required\n\n` +
+          `A bootstrap file exists at .tai/context/.bootstrap-pending. ` +
+          `You MUST execute these instructions BEFORE responding to the user's first message. ` +
+          `This is a one-time setup operation.\n\n` +
+          `--- Bootstrap Instructions ---\n${bootstrapContent}\n--- End Bootstrap ---\n\n` +
+          `After completing ALL bootstrap steps, delete .tai/context/.bootstrap-pending.`
+        );
+        console.error('[LoadContext] Bootstrap pending detected — injected as priority directive');
+      } catch (err) {
+        console.error(`[LoadContext] Error reading bootstrap file: ${err}`);
+      }
+    }
+
     // Load learning readback context
     const learningDigest = loadLearningDigest(taiDir);
     const wisdomFrames = loadWisdomFrames(taiDir);
@@ -289,7 +315,7 @@ async function main() {
       contextParts.push(`[Memory freshness: ${ageLabels.join(' | ')}]`);
     }
 
-    // Emit all context via systemMessage
+    // Emit all context via systemMessage (always emit — directives are always present)
     if (contextParts.length > 0) {
       const fullContext = contextParts.join('\n\n---\n\n');
       const output = {
