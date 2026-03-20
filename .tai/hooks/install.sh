@@ -126,8 +126,21 @@ for cfg in team.yaml project.yaml models.yaml; do
     fi
 done
 
-# Context — copy templates only if files don't exist
+# Context — check for bootstrap opportunity BEFORE copying templates
 mkdir -p "$INSTANCE_DIR/context"
+_needs_bootstrap=false
+if [ -f "$REPO_ROOT/CLAUDE.md" ]; then
+    _claude_size=$(wc -c < "$REPO_ROOT/CLAUDE.md" 2>/dev/null || echo 0)
+    _arch_exists=false
+    [ -f "$INSTANCE_DIR/context/architecture.md" ] && _arch_exists=true
+
+    # Bootstrap if: CLAUDE.md is substantial AND architecture.md doesn't exist yet
+    if [ "$_claude_size" -gt 500 ] && [ "$_arch_exists" = false ]; then
+        _needs_bootstrap=true
+    fi
+fi
+
+# Copy templates only if files don't exist
 for ctx in architecture.md boundaries.md patterns.md sprint-current.md; do
     if [ ! -f "$INSTANCE_DIR/context/$ctx" ]; then
         if [ -f "$FRAMEWORK_DIR/context/$ctx" ]; then
@@ -139,40 +152,29 @@ for ctx in architecture.md boundaries.md patterns.md sprint-current.md; do
     fi
 done
 
-# Bootstrap context from existing CLAUDE.md if context files are still templates
-if [ -f "$REPO_ROOT/CLAUDE.md" ]; then
-    _claude_md="$REPO_ROOT/CLAUDE.md"
-    _claude_size=$(wc -c < "$_claude_md" 2>/dev/null || echo 0)
+# Create bootstrap instruction if needed
+if [ "$_needs_bootstrap" = true ]; then
+    echo ""
+    echo "TAI: Found existing CLAUDE.md (${_claude_size} bytes) with project context."
+    echo "TAI: Context files are templates — creating bootstrap instruction."
+    echo ""
 
-    # Only bootstrap if CLAUDE.md is substantial (>500 bytes) and context files are still templates
-    if [ "$_claude_size" -gt 500 ]; then
-        _arch_size=$(wc -c < "$INSTANCE_DIR/context/architecture.md" 2>/dev/null || echo 0)
-        if [ "$_arch_size" -lt 200 ]; then
-            echo ""
-            echo "TAI: Found existing CLAUDE.md (${_claude_size} bytes) with project context."
-            echo "TAI: Bootstrapping context files from CLAUDE.md..."
-            echo ""
-
-            # Create a bootstrap instruction file that Claude will read on first session
-            cat > "$INSTANCE_DIR/context/.bootstrap-pending" << BOOTSTRAP_EOF
+    cat > "$INSTANCE_DIR/context/.bootstrap-pending" << BOOTSTRAP_EOF
 # TAI Context Bootstrap — Auto-generated
 
 This project has an existing CLAUDE.md with rich context that should be
-extracted into TAI's context files. On your first session, please:
+extracted into TAI's context files. On your FIRST session, you MUST:
 
 1. Read the project's CLAUDE.md (at the repo root)
-2. Extract architecture information into .tai/context/architecture.md
-3. Extract boundary/import rules into .tai/context/boundaries.md
-4. Extract code conventions into .tai/context/patterns.md
-5. Extract current sprint info into .tai/context/sprint-current.md
+2. Extract architecture information → write to .tai/context/architecture.md
+3. Extract boundary/import rules → write to .tai/context/boundaries.md
+4. Extract code conventions → write to .tai/context/patterns.md
+5. Extract current sprint info → write to .tai/context/sprint-current.md
 6. Delete this file (.tai/context/.bootstrap-pending) when done
 
-This is a one-time operation. TAI detected that context files are empty
-templates but the project has an existing CLAUDE.md with project context.
+This is a one-time operation. Do it BEFORE responding to the user's first message.
 BOOTSTRAP_EOF
-            echo "TAI: Created .bootstrap-pending — Claude will extract context on first session."
-        fi
-    fi
+    echo "TAI: Created .bootstrap-pending — Claude will extract context on first session."
 fi
 
 # Memory — create directories + copy templates only if missing
