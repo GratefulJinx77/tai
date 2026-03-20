@@ -25,7 +25,9 @@ set -o pipefail
 # CONFIGURATION — find .tai/ relative to git root
 # ─────────────────────────────────────────────────────────────────────────────
 
-REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+# Use current_dir from Claude Code input (parsed later) for REPO_ROOT fallback
+# Initial REPO_ROOT — may be overridden after JSON parsing
+REPO_ROOT="$(git -C "$(pwd)" rev-parse --show-superproject-working-tree 2>/dev/null || git rev-parse --show-toplevel 2>/dev/null || pwd)"
 TAI_DIR="$REPO_ROOT/.tai"
 
 # Graceful fallback if .tai/ doesn't exist
@@ -160,6 +162,35 @@ eval "$(echo "$input" | jq -r '
   "worktree_branch=" + (.worktree.branch // "" | @sh) + "\n" +
   "worktree_name=" + (.worktree.name // "" | @sh)
 ' 2>/dev/null)"
+
+# Override REPO_ROOT with current_dir from Claude Code (more reliable than git rev-parse)
+if [ -n "${current_dir:-}" ] && [ -d "${current_dir}/.tai" ]; then
+    REPO_ROOT="$current_dir"
+    TAI_DIR="$REPO_ROOT/.tai"
+    TEAM_CONFIG="$TAI_DIR/config/team.yaml"
+    PROJECT_CONFIG="$TAI_DIR/config/project.yaml"
+    VERSION_FILE="$TAI_DIR/VERSION"
+    HOOKS_CONFIG="$TAI_DIR/hooks/config.yaml"
+    SPRINT_FILE="$TAI_DIR/context/sprint-current.md"
+    RATINGS_FILE="$TAI_DIR/memory/signals/ratings.jsonl"
+
+    # Re-read config values with corrected paths
+    if [ -f "$TEAM_CONFIG" ]; then
+        TEAM_NAME=$(grep -E '^\s+name:' "$TEAM_CONFIG" 2>/dev/null | head -1 | sed 's/.*name: *//; s/ *#.*//' | tr -d '"'"'")
+        TEAM_NAME="${TEAM_NAME:-Team}"
+
+        _git_email=$(git config user.email 2>/dev/null)
+        if [ -n "$_git_email" ]; then
+            _role=$(awk -v email="$_git_email" '
+                /^\s+- name:/ { found=0 }
+                /email:/ && $0 ~ email { found=1 }
+                found && /default_role:/ { gsub(/.*default_role: */, ""); gsub(/ *#.*/, ""); gsub(/["'"'"']/, ""); print; exit }
+            ' "$TEAM_CONFIG" 2>/dev/null)
+            [ -n "$_role" ] && USER_ROLE="$_role"
+        fi
+    fi
+    TAI_VERSION=$(cat "$VERSION_FILE" 2>/dev/null || echo "?.?.?")
+fi
 
 # Ensure defaults for critical numeric values
 context_pct=${context_pct:-0}
