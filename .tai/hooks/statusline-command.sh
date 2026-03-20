@@ -25,9 +25,9 @@ set -o pipefail
 # CONFIGURATION — find .tai/ relative to git root
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Use current_dir from Claude Code input (parsed later) for REPO_ROOT fallback
-# Initial REPO_ROOT — may be overridden after JSON parsing
-REPO_ROOT="$(git -C "$(pwd)" rev-parse --show-superproject-working-tree 2>/dev/null || git rev-parse --show-toplevel 2>/dev/null || pwd)"
+# REPO_ROOT = project root. Claude Code runs statusline from the project directory.
+# Do NOT use git rev-parse — it resolves symlinks into the submodule.
+REPO_ROOT="$(pwd)"
 TAI_DIR="$REPO_ROOT/.tai"
 
 # Graceful fallback if .tai/ doesn't exist
