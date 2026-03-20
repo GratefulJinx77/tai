@@ -93,10 +93,10 @@ if [ -f "$HOOKS_CONFIG" ]; then
     [ "$_hc" -gt 0 ] && HOOK_COUNT="$_hc"
 fi
 
-# Get team name from team.yaml
+# Get team name from team.yaml (first name: directly under team:, not under members:)
 TEAM_NAME=""
 if [ -f "$TEAM_CONFIG" ]; then
-    TEAM_NAME=$(grep -E '^team_name:|^name:' "$TEAM_CONFIG" 2>/dev/null | head -1 | sed 's/.*: *//' | tr -d '"' | tr -d "'")
+    TEAM_NAME=$(awk '/^team:/{t=1} t && /^  name:/{gsub(/.*name: */, ""); gsub(/ *#.*/, ""); gsub(/["'"'"']/, ""); print; exit}' "$TEAM_CONFIG" 2>/dev/null)
 fi
 TEAM_NAME="${TEAM_NAME:-Team}"
 
@@ -176,7 +176,7 @@ if [ -n "${current_dir:-}" ] && [ -d "${current_dir}/.tai" ]; then
 
     # Re-read config values with corrected paths
     if [ -f "$TEAM_CONFIG" ]; then
-        TEAM_NAME=$(grep -E '^\s+name:' "$TEAM_CONFIG" 2>/dev/null | head -1 | sed 's/.*name: *//; s/ *#.*//' | tr -d '"'"'")
+        TEAM_NAME=$(awk '/^team:/{t=1} t && /^  name:/{gsub(/.*name: */, ""); gsub(/ *#.*/, ""); gsub(/["'"'"']/, ""); print; exit}' "$TEAM_CONFIG" 2>/dev/null)
         TEAM_NAME="${TEAM_NAME:-Team}"
 
         _git_email=$(git config user.email 2>/dev/null)
