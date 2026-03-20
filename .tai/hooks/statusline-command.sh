@@ -351,8 +351,8 @@ GITEOF
     config_city=""
     config_state=""
     if [ -f "$TEAM_CONFIG" ]; then
-        config_city=$(grep -E '^\s+city:' "$TEAM_CONFIG" 2>/dev/null | head -1 | sed 's/.*city: *//' | tr -d '"'"'")
-        config_state=$(grep -E '^\s+state:' "$TEAM_CONFIG" 2>/dev/null | head -1 | sed 's/.*state: *//' | tr -d '"'"'")
+        config_city=$(grep -E '^\s+city:' "$TEAM_CONFIG" 2>/dev/null | head -1 | sed 's/.*city: *//; s/ *#.*//' | tr -d '"'"'")
+        config_state=$(grep -E '^\s+state:' "$TEAM_CONFIG" 2>/dev/null | head -1 | sed 's/.*state: *//; s/ *#.*//' | tr -d '"'"'")
     fi
     if [ -n "$config_city" ]; then
         echo -e "location_city='${config_city}'\nlocation_state='${config_state}'" > "$_parallel_tmp/location.sh"
