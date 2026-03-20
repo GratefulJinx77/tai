@@ -1,16 +1,15 @@
 team:
   name: ""
-  admin_users: []  # emails of members who can activate /tai-admin
-  # Location shown in statusline. Set to skip geolocation.
-  location:
-    city: ""
-    state: ""
+  admin_users: []
   members:
     - name: ""
-      email: ""  # Must match git config user.email
+      email: ""
       github: ""
-      default_role: dev  # dev | qa | pub (context shaping, not access control)
+      default_role: dev
+      location:
+        city: ""
+        state: ""
   notifications:
-    platform: ""  # teams | slack | discord
+    platform: ""
     webhook_url: ""
     channel: ""

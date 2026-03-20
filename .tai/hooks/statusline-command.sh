@@ -346,13 +346,40 @@ GITEOF
 } &
 
 {
-    # 2. Location fetch (config override → cache → API)
-    # Check team.yaml or project.yaml for configured location first
+    # 2. Location fetch (per-member config → team config → cache → API)
+    # Match current user's git email to their member entry in team.yaml
     config_city=""
     config_state=""
     if [ -f "$TEAM_CONFIG" ]; then
-        config_city=$(grep -E '^\s+city:' "$TEAM_CONFIG" 2>/dev/null | head -1 | sed 's/.*city: *//; s/ *#.*//' | tr -d '"'"'")
-        config_state=$(grep -E '^\s+state:' "$TEAM_CONFIG" 2>/dev/null | head -1 | sed 's/.*state: *//; s/ *#.*//' | tr -d '"'"'")
+        git_email=$(git config user.email 2>/dev/null)
+        if [ -n "$git_email" ]; then
+            # Find the member block matching this email, extract their location
+            config_city=$(awk -v email="$git_email" '
+                /^\s+- name:/ { in_member=1; found=0; city=""; state="" }
+                in_member && /email:/ && $0 ~ email { found=1 }
+                found && /city:/ { gsub(/.*city: */, ""); gsub(/ *#.*/, ""); gsub(/["\047]/, ""); city=$0 }
+                found && /state:/ { gsub(/.*state: */, ""); gsub(/ *#.*/, ""); gsub(/["\047]/, ""); state=$0 }
+                found && city != "" { print city; exit }
+            ' "$TEAM_CONFIG" 2>/dev/null)
+            config_state=$(awk -v email="$git_email" '
+                /^\s+- name:/ { in_member=1; found=0; state="" }
+                in_member && /email:/ && $0 ~ email { found=1 }
+                found && /state:/ { gsub(/.*state: */, ""); gsub(/ *#.*/, ""); gsub(/["\047]/, ""); print; exit }
+            ' "$TEAM_CONFIG" 2>/dev/null)
+        fi
+        # Fallback: team-level location (if no per-member location)
+        if [ -z "$config_city" ]; then
+            config_city=$(awk '
+                /^  location:/ { in_loc=1; next }
+                in_loc && /city:/ { gsub(/.*city: */, ""); gsub(/ *#.*/, ""); gsub(/["\047]/, ""); if ($0 != "") print; exit }
+                in_loc && /^  [a-z]/ && !/state:/ { exit }
+            ' "$TEAM_CONFIG" 2>/dev/null)
+            config_state=$(awk '
+                /^  location:/ { in_loc=1; next }
+                in_loc && /state:/ { gsub(/.*state: */, ""); gsub(/ *#.*/, ""); gsub(/["\047]/, ""); if ($0 != "") print; exit }
+                in_loc && /^  [a-z]/ && !/city:/ { exit }
+            ' "$TEAM_CONFIG" 2>/dev/null)
+        fi
     fi
     if [ -n "$config_city" ]; then
         echo -e "location_city='${config_city}'\nlocation_state='${config_state}'" > "$_parallel_tmp/location.sh"
