@@ -412,7 +412,6 @@ GITEOF
             ' "$TEAM_CONFIG" 2>/dev/null)
         fi
     fi
-    echo "[TAI-LOC-DEBUG] TEAM_CONFIG=$TEAM_CONFIG exists=$([ -f "$TEAM_CONFIG" ] && echo Y || echo N) email=${git_email:-none} city=${config_city:-empty} state=${config_state:-empty}" >&2
     if [ -n "$config_city" ]; then
         echo -e "location_city='${config_city}'\nlocation_state='${config_state}'" > "$_parallel_tmp/location.sh"
     else
