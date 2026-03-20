@@ -139,6 +139,42 @@ for ctx in architecture.md boundaries.md patterns.md sprint-current.md; do
     fi
 done
 
+# Bootstrap context from existing CLAUDE.md if context files are still templates
+if [ -f "$REPO_ROOT/CLAUDE.md" ]; then
+    _claude_md="$REPO_ROOT/CLAUDE.md"
+    _claude_size=$(wc -c < "$_claude_md" 2>/dev/null || echo 0)
+
+    # Only bootstrap if CLAUDE.md is substantial (>500 bytes) and context files are still templates
+    if [ "$_claude_size" -gt 500 ]; then
+        _arch_size=$(wc -c < "$INSTANCE_DIR/context/architecture.md" 2>/dev/null || echo 0)
+        if [ "$_arch_size" -lt 200 ]; then
+            echo ""
+            echo "TAI: Found existing CLAUDE.md (${_claude_size} bytes) with project context."
+            echo "TAI: Bootstrapping context files from CLAUDE.md..."
+            echo ""
+
+            # Create a bootstrap instruction file that Claude will read on first session
+            cat > "$INSTANCE_DIR/context/.bootstrap-pending" << BOOTSTRAP_EOF
+# TAI Context Bootstrap — Auto-generated
+
+This project has an existing CLAUDE.md with rich context that should be
+extracted into TAI's context files. On your first session, please:
+
+1. Read the project's CLAUDE.md (at the repo root)
+2. Extract architecture information into .tai/context/architecture.md
+3. Extract boundary/import rules into .tai/context/boundaries.md
+4. Extract code conventions into .tai/context/patterns.md
+5. Extract current sprint info into .tai/context/sprint-current.md
+6. Delete this file (.tai/context/.bootstrap-pending) when done
+
+This is a one-time operation. TAI detected that context files are empty
+templates but the project has an existing CLAUDE.md with project context.
+BOOTSTRAP_EOF
+            echo "TAI: Created .bootstrap-pending — Claude will extract context on first session."
+        fi
+    fi
+fi
+
 # Memory — create directories + copy templates only if missing
 mkdir -p "$INSTANCE_DIR/memory/decisions"
 mkdir -p "$INSTANCE_DIR/memory/learnings"
@@ -218,26 +254,19 @@ mkdir -p "$RULES_DIR"
 cat > "$RULES_DIR/tai.md" << 'RULES_EOF'
 # TAI — Team AI Infrastructure
 
-## MANDATORY: Session Initialization
+## Session Initialization
 
-At the START of every session, you MUST perform these steps before responding to the user:
+At the START of every session, perform these steps before responding:
 
-1. Read `.tai/CORE.md` and follow its initialization protocol
-2. Read `.tai/config/team.yaml` — identify the current user by matching `git config user.email`
+1. Read `.tai/CORE.md` for the session protocol
+2. Read `.tai/config/team.yaml` — identify user by `git config user.email`
 3. Read the user's role file from `.tai/roles/{role}.md` (default: dev.md)
-4. Read `.tai/memory/decisions/INDEX.md` — load active team decisions
-5. Read `.tai/memory/state/current.md` — load active sprint and work items
+4. Read `.tai/memory/decisions/INDEX.md` — active team decisions
+5. Read `.tai/memory/state/current.md` — active sprint and work
 6. Read `.tai/context/architecture.md`, `.tai/context/boundaries.md`, `.tai/context/patterns.md`
-7. Display the status line as your FIRST output:
+7. Check if `.tai/context/.bootstrap-pending` exists — if so, read it and follow its instructions to populate context files from the project's CLAUDE.md, then delete the file
 
-```
-── │ TAI │ ──────────────────────────────────
-ENV: TAI:{version from .tai/VERSION} │ Hooks: {count}
-◈ PWD: {project name} │ Branch: {git branch} │ Role: {user role}
-◎ MEMORY: {n} Decisions │ {n} Learnings │ {n} Signals
-◐ SPRINT: {from context/sprint-current.md} │ {n}/{m} ISC
-──────────────────────────────────────────────
-```
+The terminal statusline is handled by the bash statusline script — do NOT output your own statusline.
 
 ## Context Recovery
 
