@@ -33,9 +33,16 @@ ROLE="$(resolve_role)"
 
 read_command() {
     local key="$1"
+    local val=""
     if [ -f "$PROJECT_YAML" ]; then
-        grep "^    ${key}:" "$PROJECT_YAML" 2>/dev/null | sed "s/^    ${key}: *//" | sed 's/^"//' | sed 's/"$//' | sed "s/^'//" | sed "s/'$//"
+        val=$(grep "^    ${key}:" "$PROJECT_YAML" 2>/dev/null \
+            | sed "s/^    ${key}: *//" \
+            | sed 's/ *#.*//' \
+            | sed 's/^"//;s/"$//' \
+            | sed "s/^'//;s/'$//" \
+            | xargs)
     fi
+    if [ -n "$val" ]; then echo "$val"; fi
 }
 
 log_event() {
