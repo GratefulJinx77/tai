@@ -35,9 +35,18 @@ ROLE="$(resolve_role)"
 # Read a command from project.yaml
 read_command() {
     local key="$1"
+    local val=""
     if [ -f "$PROJECT_YAML" ]; then
-        grep "^    ${key}:" "$PROJECT_YAML" 2>/dev/null | sed "s/^    ${key}: *//" | sed 's/^"//;s/"$//' | sed "s/^'//;s/'$//"
+        # Extract value, strip inline YAML comments, then strip quotes
+        val=$(grep "^    ${key}:" "$PROJECT_YAML" 2>/dev/null \
+            | sed "s/^    ${key}: *//" \
+            | sed 's/ *#.*//' \
+            | sed 's/^"//;s/"$//' \
+            | sed "s/^'//;s/'$//" \
+            | xargs)
     fi
+    # Return nothing for empty/whitespace-only values
+    if [ -n "$val" ]; then echo "$val"; fi
 }
 
 log_event() {

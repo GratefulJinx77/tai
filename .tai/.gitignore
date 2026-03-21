@@ -1,0 +1,20 @@
+# Decisions are committed (shared team knowledge)
+# Everything else is ephemeral
+
+# Ephemeral memory
+memory/learnings/*.jsonl
+memory/signals/*.jsonl
+memory/failures/
+memory/state/pre-compact-*.json
+memory/state/session-*.json
+memory/state/work.json
+memory/state/model-cache.txt
+memory/state/session-name-cache.sh
+memory/state/*.bak
+memory/state/system-counts.json
+memory/state/tai-metrics.json
+memory/state/counts-cache.sh
+memory/state/last-response.txt
+
+# Agent memory (per-machine)
+agent-memory/

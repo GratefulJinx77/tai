@@ -93,6 +93,10 @@
         "hooks": [
           {
             "type": "command",
+            "command": "bun run .tai/hooks/BootstrapGuard.hook.ts"
+          },
+          {
+            "type": "command",
             "command": "bun run .tai/hooks/UpdateTabTitle.hook.ts"
           },
           {

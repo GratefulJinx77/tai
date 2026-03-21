@@ -26,9 +26,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FRAMEWORK_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # REPO_ROOT = the actual project root
-REPO_ROOT="$(cd "$FRAMEWORK_DIR" && git rev-parse --show-superproject-working-tree 2>/dev/null || git rev-parse --show-toplevel 2>/dev/null || pwd)"
-# If we're in a submodule, show-superproject-working-tree gives us the parent project
-# If not a submodule, show-toplevel gives us the repo root
+# show-superproject-working-tree returns empty string (exit 0) when not a submodule,
+# so we must check the output, not just the exit code.
+_super="$(cd "$FRAMEWORK_DIR" && git rev-parse --show-superproject-working-tree 2>/dev/null)"
+if [ -n "$_super" ]; then
+    REPO_ROOT="$_super"
+else
+    REPO_ROOT="$(cd "$FRAMEWORK_DIR" && git rev-parse --show-toplevel 2>/dev/null || pwd)"
+fi
 
 # FRAMEWORK_REL = relative path from REPO_ROOT to FRAMEWORK_DIR
 FRAMEWORK_REL="$(python3 -c "import os; print(os.path.relpath('$FRAMEWORK_DIR', '$REPO_ROOT'))" 2>/dev/null || echo ".tai")"
