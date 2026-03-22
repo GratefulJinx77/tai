@@ -21,7 +21,7 @@ TAI loads consistent context, shared memory, and team conventions into every Cla
 | **Agent Library** | 16 agents across 6 groups for specialized tasks |
 | **Context Recovery** | Automatic re-injection of critical state after context compaction |
 | **Status Line** | Rich 5-segment terminal display showing environment, memory, and sprint state |
-| **CLI Tool** | `tai init`, `tai install`, `tai update`, `tai status` |
+| **Slash Commands** | `/tai-validate`, `/tai-admin`, `/tai-sprint`, `/tai-decisions`, `/tai-health` |
 
 ## How It Works
 
@@ -43,7 +43,7 @@ When Claude Code starts in a TAI-enabled project:
 - [[Memory System]] -- Shared context across all sessions
 - [[Skill Packages]] -- Workflow definitions and package management
 - [[Agents]] -- 16 agents across 6 groups
-- [[CLI Reference]] -- `tai init`, `install`, `update`, `status`
+- [[CLI Reference]] -- Slash commands and verification
 - [[Status Line]] -- Rich terminal status display
 - [[Migration Guide]] -- Bring TAI into an existing project
 - [[Architecture]] -- System design and lifecycle diagrams

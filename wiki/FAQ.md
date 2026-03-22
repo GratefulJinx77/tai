@@ -162,10 +162,79 @@ You can gitignore the telemetry directory if you don't want logs committed.
 ### How do I upgrade TAI to a newer version?
 
 ```bash
-tai update
+cd .tai-upstream && git pull && bun install && cd ..
+.tai-upstream/.tai/hooks/install.sh
+```
+
+If you hit "detached HEAD":
+```bash
+cd .tai-upstream && git checkout main && git pull
 ```
 
 For major version upgrades, see the [[Migration Guide]].
+
+---
+
+## Troubleshooting
+
+### Context bar shows 0% {#context-bar-shows-0}
+
+**Cause:** `jq` is not installed. The statusline parses Claude Code's JSON input with `jq`. Without it, the jq call fails silently (stderr is suppressed) and `context_pct` defaults to 0.
+
+**Fix:** Install jq, then restart your Claude session:
+```bash
+sudo apt install jq    # Linux
+brew install jq         # macOS
+```
+
+### Pre-commit hook crashes with "unexpected EOF"
+
+**Cause:** `project.yaml` has empty values with inline comments (e.g., `lint: ""  # example`). The YAML comment wasn't stripped before `eval`, producing garbage. Fixed in TAI v2.0.0+.
+
+**Fix:** Pull latest TAI and re-run install:
+```bash
+cd .tai-upstream && git pull && cd ..
+.tai-upstream/.tai/hooks/install.sh
+```
+
+### Hooks don't fire
+
+**Cause:** `.claude/settings.local.json` doesn't exist or doesn't contain hook registrations.
+
+**Fix:** Re-run the installer, then restart your Claude session:
+```bash
+.tai-upstream/.tai/hooks/install.sh
+```
+
+### "Cannot find package 'yaml'"
+
+**Cause:** `bun install` was not run in the TAI directory.
+
+**Fix:**
+```bash
+cd .tai-upstream && bun install
+```
+
+### Statusline shows but never updates
+
+**Cause:** `settings.local.json` was created or changed mid-session. Claude Code loads settings at session start.
+
+**Fix:** Restart your Claude session.
+
+### "detached HEAD" when pulling TAI updates
+
+**Cause:** TAI was cloned or checked out without tracking a branch.
+
+**Fix:**
+```bash
+cd .tai-upstream && git checkout main && git pull
+```
+
+### Install script fails with "Missing required dependencies"
+
+**Cause:** One or more of jq, bun, or python3 is not installed.
+
+**Fix:** Install the missing dependency. The error message tells you which one.
 
 ---
 
