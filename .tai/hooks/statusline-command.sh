@@ -79,6 +79,9 @@ get_mtime() {
 
 input=$(cat)
 
+# DEBUG: dump raw input for diagnosis
+echo "$input" > /tmp/tai-sl-debug.json 2>/dev/null
+
 # Get TAI version
 TAI_VERSION="—"
 [ -f "$VERSION_FILE" ] && TAI_VERSION=$(cat "$VERSION_FILE" 2>/dev/null | head -1)
