@@ -52,6 +52,17 @@ echo "TAI: Framework at: $FRAMEWORK_REL"
 echo "TAI: Project at:   $REPO_ROOT"
 echo ""
 
+# Check required system dependencies
+_missing=""
+command -v jq >/dev/null 2>&1 || _missing="${_missing} jq"
+command -v bun >/dev/null 2>&1 || _missing="${_missing} bun"
+command -v python3 >/dev/null 2>&1 || _missing="${_missing} python3"
+if [ -n "$_missing" ]; then
+    echo "TAI: Missing required dependencies:${_missing}"
+    echo "TAI: Install them before continuing (e.g., sudo apt install jq)"
+    exit 1
+fi
+
 if [ ! -f "$CONFIG" ]; then
     echo "TAI: Hook config not found at $CONFIG"
     exit 1
