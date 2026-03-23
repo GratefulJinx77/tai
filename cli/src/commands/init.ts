@@ -1,131 +1,40 @@
 import { existsSync, mkdirSync, writeFileSync, cpSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { createInterface } from "node:readline";
+import { execSync } from "node:child_process";
 
-const SCAFFOLD_DIRS = [
-  "config",
-  "context",
-  "hooks",
-  "hooks/lib",
-  "roles",
-  "skills/core",
-  "skills/custom",
-  "agents/core",
-  "agents/custom",
-  "memory/decisions",
-  "memory/learnings",
-  "memory/state",
-  "memory/signals",
-  "memory/failures",
-  "agent-memory",
-  "telemetry",
-  "templates",
-];
+const rl = createInterface({ input: process.stdin, output: process.stdout });
 
-const SCAFFOLD_FILES: Record<string, string> = {
-  VERSION: "2.0.0\n",
-  "config/team.yaml": `team:
-  name: ""
-  admin_users: []
-  members:
-    - name: ""
-      email: ""
-      github: ""
-      default_role: dev
-  notifications:
-    platform: ""
-    webhook_url: ""
-    channel: ""
-`,
-  "config/project.yaml": `project:
-  name: ""
-  stack:
-    language: ""
-    test_runner: ""
-  commands:
-    build: ""
-    test: ""
-    lint: ""
-    type_check: ""
-`,
-  "config/models.yaml": `models:
-  default: claude-sonnet-4-20250514
-  thinking: claude-opus-4-20250514
-  fast: claude-haiku-4-5-20251001
-`,
-  "context/architecture.md": `# Architecture
+function ask(question: string, defaultValue = ""): Promise<string> {
+  const suffix = defaultValue ? ` (${defaultValue})` : "";
+  return new Promise((resolve) => {
+    rl.question(`  ${question}${suffix}: `, (answer) => {
+      resolve(answer.trim() || defaultValue);
+    });
+  });
+}
 
-<!-- Document your system architecture here -->
-`,
-  "context/boundaries.md": `# Boundaries
+function getGitConfig(key: string): string {
+  try {
+    return execSync(`git config ${key}`, { encoding: "utf-8" }).trim();
+  } catch {
+    return "";
+  }
+}
 
-<!-- Document forbidden imports and service separation rules here -->
-`,
-  "context/patterns.md": `# Team Patterns & Conventions
-
-## Naming Conventions
-<!-- pattern: description -->
-<!-- example: correct usage -->
-<!-- counter-example: incorrect usage -->
-
-## File Organization
-
-## Code Patterns
-
-## Testing Conventions
-`,
-  "context/sprint-current.md": `# Sprint 0: Setup
-
-## Objectives
-- Initialize TAI in the project
-- Configure team members
-- Define boundaries and patterns
-- Install hooks
-
-## ISC
-- [ ] ISC-1: team.yaml has all team members configured
-- [ ] ISC-2: project.yaml has correct stack and commands
-- [ ] ISC-3: boundaries.md has at least one boundary rule
-- [ ] ISC-4: patterns.md has at least one convention
-- [ ] ISC-5: Git hooks are installed and passing
-- [ ] ISC-6: All team members can start a TAI session
-`,
-  "memory/decisions/INDEX.md": `# Decision Index
-
-<!-- Decisions are added here as they are made -->
-`,
-  "memory/learnings/summary.md": `# Team Learnings
-
-<!-- Synthesized monthly from session learnings -->
-`,
-  "memory/state/current.md": `# Current State
-
-## Active Sprint
-None
-
-## Active Work Items
-None
-`,
-  "packages.yaml": `packages:
-  required:
-    - core
-  recommended:
-    - development
-    - quality
-    - architecture
-  optional:
-    - thinking
-    - research
-    - security
-    - content-analysis
-    - media
-`,
-};
+function getGitBranch(): string {
+  try {
+    return execSync("git branch --show-current", { encoding: "utf-8" }).trim();
+  } catch {
+    return "main";
+  }
+}
 
 interface InitOptions {
   force?: boolean;
 }
 
-export function init(options: InitOptions): void {
+export async function init(options: InitOptions): Promise<void> {
   const cwd = process.cwd();
   const taiDir = join(cwd, ".tai");
 
@@ -136,56 +45,189 @@ export function init(options: InitOptions): void {
     process.exit(1);
   }
 
+  // Check prerequisites
+  const missing: string[] = [];
+  try { execSync("jq --version", { stdio: "ignore" }); } catch { missing.push("jq"); }
+  try { execSync("bun --version", { stdio: "ignore" }); } catch { missing.push("bun"); }
+  try { execSync("python3 --version", { stdio: "ignore" }); } catch { missing.push("python3"); }
+
+  if (missing.length > 0) {
+    console.error(`\nMissing required dependencies: ${missing.join(", ")}`);
+    console.error("Install them before running tai init.");
+    if (missing.includes("jq")) console.error("  jq: sudo apt install jq (Linux) / brew install jq (macOS)");
+    if (missing.includes("bun")) console.error("  bun: curl -fsSL https://bun.sh/install | bash");
+    process.exit(1);
+  }
+
+  console.log("\n── TAI Init ──────────────────────────────────\n");
+  console.log("Setting up Team AI Infrastructure.\n");
+
+  // Detect git info
+  const gitName = getGitConfig("user.name");
+  const gitEmail = getGitConfig("user.email");
+  const gitRemote = getGitConfig("remote.origin.url");
+  const gitHub = gitRemote.match(/github\.com[:/]([^/]+)/)?.[1] || "";
+  const projectDir = cwd.split("/").pop() || "my-project";
+
+  // ── Team Info ──
+  console.log("── Team ──\n");
+  const teamName = await ask("Team name", projectDir);
+  const userName = await ask("Your name", gitName);
+  const userEmail = await ask("Your email", gitEmail);
+  const userGithub = await ask("Your GitHub username", gitHub);
+
+  // ── Project Info ──
+  console.log("\n── Project ──\n");
+  const projectName = await ask("Project name", projectDir);
+  const projectDesc = await ask("Description", "");
+  const language = await ask("Language", detectLanguage(cwd));
+  const framework = await ask("Framework", "");
+  const database = await ask("Database", "");
+  const testRunner = await ask("Test runner", detectTestRunner(cwd));
+  const linter = await ask("Linter", detectLinter(cwd));
+
+  // ── Commands ──
+  console.log("\n── Build Commands (leave empty to skip) ──\n");
+  const buildCmd = await ask("Build", detectCommand(cwd, "build"));
+  const testCmd = await ask("Test", detectCommand(cwd, "test"));
+  const lintCmd = await ask("Lint", detectCommand(cwd, "lint"));
+  const typeCheckCmd = await ask("Type check", "");
+  const devCmd = await ask("Dev server", detectCommand(cwd, "dev"));
+
+  rl.close();
+
+  // ── Scaffold ──
+  console.log("\n── Creating .tai/ ──\n");
+
   // Check if we're in the TAI source repo (has CORE.md to copy)
   const sourceDir = resolve(import.meta.dirname, "../../..");
   const sourceTaiDir = join(sourceDir, ".tai");
   const hasSource = existsSync(join(sourceTaiDir, "CORE.md"));
 
   if (hasSource && sourceTaiDir !== taiDir) {
-    // Copy from source
     cpSync(sourceTaiDir, taiDir, { recursive: true });
-    console.log("Initialized .tai/ from TAI source repository.");
+    console.log("  Copied framework from TAI source repository.");
   } else {
-    // Scaffold from templates
-    for (const dir of SCAFFOLD_DIRS) {
+    // Scaffold directories
+    const dirs = [
+      "config", "context", "hooks", "hooks/lib", "roles",
+      "skills/core", "skills/custom",
+      "agents/core", "agents/custom",
+      "memory/decisions", "memory/learnings", "memory/state",
+      "memory/signals", "memory/failures",
+      "agent-memory", "telemetry", "templates",
+    ];
+    for (const dir of dirs) {
       mkdirSync(join(taiDir, dir), { recursive: true });
     }
-
-    for (const [file, content] of Object.entries(SCAFFOLD_FILES)) {
-      const filePath = join(taiDir, file);
-      if (!existsSync(filePath) || options.force) {
-        writeFileSync(filePath, content, "utf-8");
-      }
-    }
-
-    // Copy CORE.md and role files
-    const coreContent = `# TAI Session Protocol
-
-See the TAI repository for the full CORE.md content.
-Initialize from the TAI repo for a complete setup.
-`;
-    writeFileSync(join(taiDir, "CORE.md"), coreContent, "utf-8");
-
-    // Write role files
-    const roles: Record<string, string> = {
-      "roles/dev.md": `# Dev Role\n\nDefault role for all team members.\nFull access to all skills, queries, and tools.\n`,
-      "roles/qa.md": `# QA Role\n\nQuality-focused team member.\nSame access as Dev, context emphasizes testing and validation.\n`,
-      "roles/pub.md": `# Pub Role\n\nPublic-facing content team member.\nSame access as Dev, context emphasizes content quality.\n`,
-      "roles/admin.md": `# Admin Role\n\nTAI system administrator. Activated via /tai-admin.\nRetains all Dev capabilities plus TAI configuration.\n`,
-    };
-
-    for (const [file, content] of Object.entries(roles)) {
-      writeFileSync(join(taiDir, file), content, "utf-8");
-    }
-
-    console.log("Initialized .tai/ with scaffold template.");
+    console.log("  Created directory structure.");
   }
 
+  // ── Write config files (always overwrite with interactive values) ──
+  writeFileSync(
+    join(taiDir, "config", "team.yaml"),
+    `team:
+  name: "${teamName}"
+  admin_users: ["${userEmail}"]
+  members:
+    - name: "${userName}"
+      email: "${userEmail}"
+      github: "${userGithub}"
+      default_role: dev
+      location:
+        city: ""
+        state: ""
+  notifications:
+    platform: ""
+    webhook_url: ""
+    channel: ""
+`,
+    "utf-8"
+  );
+  console.log("  Wrote config/team.yaml");
+
+  writeFileSync(
+    join(taiDir, "config", "project.yaml"),
+    `project:
+  name: "${projectName}"
+  description: "${projectDesc}"
+
+  stack:
+    language: "${language}"
+    framework: "${framework}"
+    database: "${database}"
+    build_tool: ""
+    test_runner: "${testRunner}"
+    linter: "${linter}"
+    type_checker: ""
+
+  commands:
+    build: "${buildCmd}"
+    test: "${testCmd}"
+    lint: "${lintCmd}"
+    type_check: "${typeCheckCmd}"
+    dev: "${devCmd}"
+`,
+    "utf-8"
+  );
+  console.log("  Wrote config/project.yaml");
+
+  // ── Run install.sh if available ──
+  const installScript = join(taiDir, "hooks", "install.sh");
+  if (existsSync(installScript)) {
+    console.log("\n── Installing hooks ──\n");
+    try {
+      execSync(`bash "${installScript}"`, { stdio: "inherit", cwd });
+    } catch {
+      console.error("  Warning: install.sh failed. Run it manually.");
+    }
+  }
+
+  // ── Summary ──
+  console.log("\n═══════════════════════════════════════════════");
+  console.log(`  TAI initialized for ${teamName}`);
+  console.log("═══════════════════════════════════════════════");
+  console.log(`\n  Team:     ${teamName} (${userName})`);
+  console.log(`  Project:  ${projectName} (${language}${framework ? " + " + framework : ""})`);
+  console.log(`  Hooks:    installed via install.sh`);
+  console.log(`\n  Next: launch Claude Code with 'claude'`);
   console.log("");
-  console.log("Next steps:");
-  console.log("  1. Edit .tai/config/team.yaml with your team members");
-  console.log("  2. Edit .tai/config/project.yaml with your stack");
-  console.log("  3. Add boundaries to .tai/context/boundaries.md");
-  console.log("  4. Run .tai/hooks/install.sh to install git hooks");
-  console.log("  5. Launch Claude Code");
+}
+
+// ── Detection helpers ──
+
+function detectLanguage(cwd: string): string {
+  if (existsSync(join(cwd, "tsconfig.json"))) return "TypeScript";
+  if (existsSync(join(cwd, "package.json"))) return "JavaScript";
+  if (existsSync(join(cwd, "go.mod"))) return "Go";
+  if (existsSync(join(cwd, "Cargo.toml"))) return "Rust";
+  if (existsSync(join(cwd, "pyproject.toml")) || existsSync(join(cwd, "requirements.txt"))) return "Python";
+  if (existsSync(join(cwd, "Gemfile"))) return "Ruby";
+  return "";
+}
+
+function detectTestRunner(cwd: string): string {
+  try {
+    const pkg = JSON.parse(execSync(`cat ${join(cwd, "package.json")}`, { encoding: "utf-8" }));
+    const deps = { ...pkg.dependencies, ...pkg.devDependencies };
+    if (deps.vitest) return "Vitest";
+    if (deps.jest) return "Jest";
+    if (deps.mocha) return "Mocha";
+  } catch { /* no package.json */ }
+  if (existsSync(join(cwd, "pytest.ini")) || existsSync(join(cwd, "pyproject.toml"))) return "pytest";
+  return "";
+}
+
+function detectLinter(cwd: string): string {
+  if (existsSync(join(cwd, ".eslintrc.json")) || existsSync(join(cwd, ".eslintrc.js")) || existsSync(join(cwd, "eslint.config.js")) || existsSync(join(cwd, "eslint.config.mjs"))) return "ESLint";
+  if (existsSync(join(cwd, ".ruff.toml")) || existsSync(join(cwd, "ruff.toml"))) return "Ruff";
+  return "";
+}
+
+function detectCommand(cwd: string, script: string): string {
+  try {
+    const pkg = JSON.parse(execSync(`cat ${join(cwd, "package.json")}`, { encoding: "utf-8" }));
+    if (pkg.scripts?.[script]) return `npm run ${script}`;
+  } catch { /* no package.json */ }
+  return "";
 }
