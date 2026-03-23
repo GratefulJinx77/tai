@@ -111,22 +111,58 @@ export async function init(options: InitOptions): Promise<void> {
   const userState = await ask("Your state/region", existingTeam.state || "");
 
   // ── Project Info ──
-  console.log("\n── Project ──\n");
-  const projectName = await ask("Project name", existingProject.name || projectDir);
-  const projectDesc = await ask("Description", existingProject.description || "");
-  const language = await ask("Language", existingProject.language || detectLanguage(cwd));
-  const framework = await ask("Framework", existingProject.framework || "");
-  const database = await ask("Database", existingProject.database || "");
-  const testRunner = await ask("Test runner", existingProject.test_runner || detectTestRunner(cwd));
-  const linter = await ask("Linter", existingProject.linter || detectLinter(cwd));
+  // In reconfigure mode, auto-detectable fields are silently re-detected.
+  // Only human-only fields (name, description) are prompted.
+  let projectName: string;
+  let projectDesc: string;
+  let language: string;
+  let framework: string;
+  let database: string;
+  let testRunner: string;
+  let linter: string;
+  let buildCmd: string;
+  let testCmd: string;
+  let lintCmd: string;
+  let typeCheckCmd: string;
+  let devCmd: string;
 
-  // ── Commands ──
-  console.log("\n── Build Commands (leave empty to skip) ──\n");
-  const buildCmd = await ask("Build", existingProject.build || detectCommand(cwd, "build"));
-  const testCmd = await ask("Test", existingProject.test || detectCommand(cwd, "test"));
-  const lintCmd = await ask("Lint", existingProject.lint || detectCommand(cwd, "lint"));
-  const typeCheckCmd = await ask("Type check", existingProject.type_check || "");
-  const devCmd = await ask("Dev server", existingProject.dev || detectCommand(cwd, "dev"));
+  if (isReconfigure) {
+    console.log("\n── Project ──\n");
+    projectName = await ask("Project name", existingProject.name || projectDir);
+    projectDesc = await ask("Description", existingProject.description || "");
+
+    // Re-detect technical fields silently, keeping existing values as fallback
+    language = existingProject.language || detectLanguage(cwd);
+    framework = existingProject.framework || "";
+    database = existingProject.database || "";
+    testRunner = existingProject.test_runner || detectTestRunner(cwd);
+    linter = existingProject.linter || detectLinter(cwd);
+    buildCmd = existingProject.build || detectCommand(cwd, "build");
+    testCmd = existingProject.test || detectCommand(cwd, "test");
+    lintCmd = existingProject.lint || detectCommand(cwd, "lint");
+    typeCheckCmd = existingProject.type_check || "";
+    devCmd = existingProject.dev || detectCommand(cwd, "dev");
+
+    if (language || framework || testRunner) {
+      console.log(`  Stack:   ${[language, framework, testRunner].filter(Boolean).join(" + ")} (auto-detected)`);
+    }
+  } else {
+    console.log("\n── Project ──\n");
+    projectName = await ask("Project name", projectDir);
+    projectDesc = await ask("Description", "");
+    language = await ask("Language", detectLanguage(cwd));
+    framework = await ask("Framework", "");
+    database = await ask("Database", "");
+    testRunner = await ask("Test runner", detectTestRunner(cwd));
+    linter = await ask("Linter", detectLinter(cwd));
+
+    console.log("\n── Build Commands (leave empty to skip) ──\n");
+    buildCmd = await ask("Build", detectCommand(cwd, "build"));
+    testCmd = await ask("Test", detectCommand(cwd, "test"));
+    lintCmd = await ask("Lint", detectCommand(cwd, "lint"));
+    typeCheckCmd = await ask("Type check", "");
+    devCmd = await ask("Dev server", detectCommand(cwd, "dev"));
+  }
 
   rl.close();
 
