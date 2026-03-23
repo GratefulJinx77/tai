@@ -92,19 +92,14 @@ skills:
 
 ## Installing Packages
 
+Packages are installed automatically by the TAI installer based on their tier:
+
 ```bash
-# Install all required + recommended packages
-tai install
-
-# Install a specific package
-tai install security
-
-# Install all packages (required + recommended + optional)
-tai install --all
-
-# Check installed packages
-tai status
+.tai-upstream/.tai/hooks/install.sh              # Required + recommended
+.tai-upstream/.tai/hooks/install.sh --all         # All packages including optional
 ```
+
+> **Note:** A `tai install` CLI command is planned but not yet built. See [[CLI Reference]] for current status.
 
 ## Building Custom Skills
 
@@ -150,5 +145,5 @@ To add a custom skill to a package for distribution, add it to the appropriate p
 ## Related Pages
 
 - [[Agents]] -- Agent packages registered in the same `packages.yaml`
-- [[CLI Reference]] -- `tai install` and `tai status` commands
+- [[CLI Reference]] -- Current tools and planned CLI
 - [[Getting Started]] -- Initial package installation

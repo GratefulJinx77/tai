@@ -6,7 +6,7 @@ TAI hooks enforce team conventions at key checkpoints in the Claude Code lifecyc
 
 Hooks are TypeScript or shell scripts that execute at specific Claude Code lifecycle events. They can inject context, validate operations, capture learnings, and enforce team standards.
 
-TAI ships with **27 hooks** organized into categories and tiers.
+TAI ships with **31 hooks** organized into categories and tiers.
 
 ## Three Categories
 

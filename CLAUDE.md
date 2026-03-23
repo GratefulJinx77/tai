@@ -12,16 +12,7 @@ At the START of every session, you MUST:
 4. Read `.tai/memory/decisions/INDEX.md` — load active team decisions
 5. Read `.tai/memory/state/current.md` — load active sprint and work items
 6. Read `.tai/context/architecture.md`, `.tai/context/boundaries.md`, `.tai/context/patterns.md`
-7. Display the status line as your FIRST output:
-
-```
-── │ TAI │ ──────────────────────────────────
-ENV: TAI:{version from .tai/VERSION} │ Hooks: {count from hooks/config.yaml}
-◈ PWD: {project name} │ Branch: {git branch} │ Role: {user role}
-◎ MEMORY: {n} Decisions │ {n} Learnings │ {n} Signals
-◐ SPRINT: {from context/sprint-current.md} │ {n}/{m} ISC
-──────────────────────────────────────────────
-```
+7. The terminal statusline renders automatically — do NOT output your own status line
 
 ## Context Recovery
 

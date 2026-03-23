@@ -12,16 +12,7 @@
    - memory/state/current.md (active sprint and work items)
 6. **Load project context** — Read context/architecture.md, context/boundaries.md, context/patterns.md
 7. **Verify hooks** — Check .git/hooks/ for installed TAI hooks
-8. **Display status line** — As the FIRST output of every session, display:
-```
-── │ TAI │ ──────────────────────────────────
-ENV: CC: {claude_code_version} │ TAI:{tai_version} │ Hooks: {installed_count}
-◈ PWD: {project_name} │ Branch: {git_branch} │ Role: {role}
-◎ MEMORY: {n} Decisions │ {n} Learnings │ {n} Signals
-◐ SPRINT: {sprint_name} │ {n}/{m} ISC │ {status}
-──────────────────────────────────────────────
-```
-Read .tai/VERSION for TAI version. Count files in memory/decisions/ for decision count. Count lines in memory/learnings/*.jsonl for learning count. Read context/sprint-current.md for sprint info.
+8. **Status line** — The terminal statusline renders automatically via `.tai/hooks/statusline-command.sh`. Do NOT output your own status line in text responses.
 
 ## Context Recovery (after compaction)
 

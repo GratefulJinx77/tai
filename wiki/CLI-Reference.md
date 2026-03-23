@@ -1,135 +1,56 @@
 # CLI Reference
 
-The TAI CLI provides four commands for project initialization, package management, and status reporting.
+> **Status: Planned** — The `tai` CLI is not yet built. Use `install.sh` for installation. See [[Getting Started]] for the current setup path.
 
-## Installation
+## Current Tools
 
-```bash
-# Global install
-npm install -g @tai/cli
+### install.sh (available now)
 
-# Or use without installing
-npx @tai/cli <command>
-```
-
-## Commands
-
-### `tai init`
-
-Scaffold the `.tai/` directory in the current project.
+The hook installer at `.tai-upstream/.tai/hooks/install.sh` handles project setup:
 
 ```bash
-tai init
-tai init --force    # Overwrite existing .tai/ directory
+.tai-upstream/.tai/hooks/install.sh              # Required + recommended hooks
+.tai-upstream/.tai/hooks/install.sh --minimal     # Required hooks only
+.tai-upstream/.tai/hooks/install.sh --all         # All hooks including optional
+.tai-upstream/.tai/hooks/install.sh --list        # List all hooks and tiers
 ```
 
-**What it creates:**
-- `.tai/CORE.md` -- Session initialization protocol
-- `.tai/VERSION` -- Set to 2.0.0
-- `.tai/CONTEXT_ROUTING.md` -- Topic-to-file mapping
-- `.tai/PRDFORMAT.md` -- Work tracking format specification
-- `.tai/status-line.md` -- Status display specification
-- `.tai/packages.yaml` -- Package registry
-- `.tai/config/` -- Template config files (team.yaml, project.yaml, models.yaml)
-- `.tai/context/` -- Placeholder context files (architecture.md, boundaries.md, patterns.md, sprint-current.md)
-- `.tai/hooks/` -- Hook scripts, config.yaml, install.sh, settings-template.json, lib/
-- `.tai/roles/` -- Role context files (dev.md, qa.md, pub.md, admin.md)
-- `.tai/skills/` -- Skill package directories
-- `.tai/agents/` -- Agent directories (core/, research/, security/, creative/, execution/, ops/, custom/)
-- `.tai/memory/` -- Memory stores (decisions/, learnings/, state/, signals/, failures/)
-- `.tai/agent-memory/` -- Per-agent persistent memory
-- `.tai/telemetry/` -- JSONL log directory
-- `.tai/templates/` -- PR description, sprint ISC, boundary examples
+**What it does:**
+- Scaffolds `.tai/` instance directories (config, context, memory, roles)
+- Creates `.claude/settings.local.json` with hook + statusline registrations
+- Creates `.claude/rules/tai.md` with session initialization rules
+- Creates `.claude/commands/*.md` with 5 slash commands
+- Symlinks git hooks (pre-commit, pre-push)
 
-**Options:**
+### Slash Commands (available now)
 
-| Flag | Description |
-|------|-------------|
-| `-f, --force` | Overwrite existing `.tai/` directory |
+After installation, these commands work inside Claude Code:
 
-### `tai install [package]`
+| Command | Description |
+|---------|-------------|
+| `/tai-validate` | Validate TAI installation — checks all components |
+| `/tai-admin` | Switch to Admin mode for system configuration |
+| `/tai-sprint` | Show current sprint status and ISC progress |
+| `/tai-decisions` | Show active team decisions |
+| `/tai-health` | Show project health — hooks, boundaries, test status |
 
-Install skill and agent packages from `packages.yaml`.
+## Planned CLI
 
-```bash
-# Install all required + recommended packages (default)
-tai install
+The `tai` CLI will provide:
 
-# Install a specific package
-tai install security
-tai install media
+| Command | Purpose |
+|---------|---------|
+| `tai init` | Interactive project initialization with prompts for team, stack, and context |
+| `tai install [package]` | Install skill/agent packages from packages.yaml |
+| `tai update` | Update installed packages to latest versions |
+| `tai status` | Show packages, hooks, and memory statistics |
 
-# Install all packages (required + recommended + optional)
-tai install --all
-```
+**Runtime:** Node.js / Bun | **Framework:** Commander.js | **Language:** TypeScript
 
-**Behavior:**
-- Without arguments: installs all `required` and `recommended` tier packages
-- With a package name: installs that specific package regardless of tier
-- With `--all`: installs every package in `packages.yaml`
-
-**Options:**
-
-| Flag | Description |
-|------|-------------|
-| `-a, --all` | Install all packages including optional tier |
-
-### `tai update`
-
-Update installed packages to their latest versions.
-
-```bash
-tai update
-```
-
-Checks each installed package against the registry and updates to the latest version defined in `packages.yaml`.
-
-### `tai status`
-
-Show installed packages, active hooks, and memory statistics.
-
-```bash
-tai status
-```
-
-**Output includes:**
-- Installed skill packages with versions and tiers
-- Installed agent packages with versions and tiers
-- Active hooks count by tier (required, recommended, optional)
-- Memory statistics:
-  - Decision count (files in `memory/decisions/`)
-  - Learning entry count
-  - Signal count (files in `memory/signals/`)
-
-## Configuration
-
-The CLI reads configuration from:
-1. `.tai/packages.yaml` -- Package registry
-2. `.tai/hooks/config.yaml` -- Hook definitions
-3. `.tai/config/team.yaml` -- Team configuration
-4. `.tai/config/project.yaml` -- Project configuration
-5. `.tai/VERSION` -- Current TAI version
-
-All paths are relative to the project root (the directory containing `.tai/`).
-
-## Technical Details
-
-The CLI is built with:
-- **Runtime:** Node.js / Bun
-- **Framework:** Commander.js
-- **Language:** TypeScript
-- **Entry point:** `cli/src/cli.ts`
-
-```typescript
-import { Command } from "commander";
-import { init } from "./commands/init.js";
-import { install } from "./commands/install.js";
-import { update } from "./commands/update.js";
-import { status } from "./commands/status.js";
-```
+Source scaffold exists at `cli/src/` but is not yet functional.
 
 ## Related Pages
 
-- [[Getting Started]] -- Using the CLI for initial setup
-- [[Skill Packages]] -- What `tai install` installs
-- [[Hook System]] -- Hook installation via `install.sh` (separate from CLI)
+- [[Getting Started]] — Current installation path via install.sh
+- [[Skill Packages]] — Package management (currently manual)
+- [[Hook System]] — Hook installation via install.sh

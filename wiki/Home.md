@@ -16,7 +16,7 @@ TAI loads consistent context, shared memory, and team conventions into every Cla
 |---------|-------------|
 | **Shared Memory** | 5 persistent stores: decisions, learnings, state, signals, failures |
 | **Flat Governance** | 4 roles (Dev, QA, Pub, Admin) that shape context, not restrict access |
-| **Hook System** | 27 hooks across 3 tiers enforcing team conventions at key checkpoints |
+| **Hook System** | 31 hooks across 3 tiers enforcing team conventions at key checkpoints |
 | **Skill Packages** | 10 packages with development, research, security, and utility workflows |
 | **Agent Library** | 16 agents across 6 groups for specialized tasks |
 | **Context Recovery** | Automatic re-injection of critical state after context compaction |

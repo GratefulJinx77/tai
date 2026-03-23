@@ -8,13 +8,15 @@ If your project currently uses a CLAUDE.md file for AI context, TAI gives you st
 
 ### Step-by-Step
 
-1. **Initialize TAI**
+1. **Clone and install TAI**
 
    ```bash
-   tai init
+   git clone https://github.com/GratefulJinx77/tai.git .tai-upstream
+   cd .tai-upstream && bun install && cd ..
+   .tai-upstream/.tai/hooks/install.sh
    ```
 
-   This creates the `.tai/` directory without touching your existing CLAUDE.md.
+   This scaffolds the `.tai/` directory without touching your existing CLAUDE.md.
 
 2. **Move architecture documentation**
 
@@ -57,11 +59,7 @@ If your project currently uses a CLAUDE.md file for AI context, TAI gives you st
    See `.tai/CORE.md` for the session initialization protocol.
    ```
 
-9. **Register hooks with Claude Code**
-
-   Copy relevant sections from `.tai/hooks/settings-template.json` to your Claude Code `settings.json`.
-
-10. **Commit everything**
+9. **Commit everything**
 
     ```bash
     git add .tai/ CLAUDE.md
@@ -90,7 +88,7 @@ If your project currently uses a CLAUDE.md file for AI context, TAI gives you st
 4. **team.yaml** -- `role` field renamed to `default_role`; `admin_users` array added
 5. **Hook tiers** -- Renamed from block/warn/silent to required/recommended/optional
 6. **Package system** -- New `packages.yaml` for skill and agent package management
-7. **CLI tool** -- New `tai` CLI with `init`, `install`, `update`, `status` commands
+7. **Slash commands** -- `/tai-validate`, `/tai-admin`, `/tai-sprint`, `/tai-decisions`, `/tai-health`
 
 ### Step-by-Step
 
@@ -170,7 +168,7 @@ If your project currently uses a CLAUDE.md file for AI context, TAI gives you st
 
 After migration, verify:
 
-- [ ] `tai status` runs without errors
+- [ ] `echo '{"context_window":{"used_percentage":50}}' | bash .tai/hooks/statusline-command.sh 2>&1 | grep "%"` shows 50%
 - [ ] Claude Code session starts and shows status line
 - [ ] Your git email matches a `team.yaml` member
 - [ ] Role context loads correctly (check status line Role field)
