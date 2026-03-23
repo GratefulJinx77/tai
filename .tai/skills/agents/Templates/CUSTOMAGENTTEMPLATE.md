@@ -5,8 +5,8 @@
 
 ## Template Usage
 
-- **Built-in agents** (`~/.claude/agents/*.md`): Use this format for the persona section
-- **Custom agents** (`~/.claude/custom-agents/*.md`): Use this format for the entire file
+- **Built-in agents** (`.tai/agents/*.md`): Use this format for the persona section
+- **Custom agents** (`.tai/agents/custom/*.md`): Use this format for the entire file
 - **Dynamic agents** (ComposeAgent ephemeral): Generated prompts follow this structure
 
 ---
@@ -185,7 +185,7 @@ SUMMARY, ANALYSIS, ACTIONS, RESULTS, STATUS, CAPTURE, NEXT, STORY EXPLANATION, C
 
 | Aspect | Built-in (`agents/*.md`) | Custom (`custom-agents/*.md`) |
 |--------|-------------------------|-------------------------------|
-| Location | `~/.claude/agents/` | `~/.claude/custom-agents/` |
+| Location | `.tai/agents/` | `.tai/agents/custom/` |
 | `custom_agent` field | Omitted | `true` |
 | `created` field | Omitted | ISO date |
 | `traits` field | Omitted | ComposeAgent trait keys |

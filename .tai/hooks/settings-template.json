@@ -9,6 +9,10 @@
           {
             "type": "command",
             "command": "bun run .tai/hooks/LoadContext.hook.ts"
+          },
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/KittyEnvPersist.hook.ts"
           }
         ]
       }
@@ -53,6 +57,15 @@
             "command": "bun run .tai/hooks/AgentExecutionGuard.hook.ts"
           }
         ]
+      },
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/SetQuestionTab.hook.ts"
+          }
+        ]
       }
     ],
     "PostToolUse": [
@@ -83,6 +96,15 @@
           {
             "type": "command",
             "command": "bun run .tai/hooks/DeployVerify.hook.ts"
+          }
+        ]
+      },
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun run .tai/hooks/QuestionAnswered.hook.ts"
           }
         ]
       }

@@ -22,12 +22,12 @@ import { resolve } from 'node:path';
 // ============================================================================
 
 /**
- * Load environment variables from ${PAI_DIR}/.env
+ * Load environment variables from ${TAI_DIR}/.env
  * This ensures API keys are available regardless of how the CLI is invoked
  */
 async function loadEnv(): Promise<void> {
-  const paiDir = process.env.PAI_DIR || resolve(process.env.HOME!, '.claude');
-  const envPath = resolve(paiDir, '.env');
+  const taiDir = process.env.TAI_DIR || resolve(process.cwd(), '.tai');
+  const envPath = resolve(taiDir, '.env');
   try {
     const envContent = await readFile(envPath, 'utf-8');
     for (const line of envContent.split('\n')) {
@@ -269,7 +269,7 @@ function parseArgs(args: string[]): CLIArgs {
 
 async function main() {
   try {
-    // Load API keys from ${PAI_DIR}/.env
+    // Load API keys from ${TAI_DIR}/.env
     await loadEnv();
 
     // Parse arguments
@@ -281,13 +281,13 @@ async function main() {
 
     if (!botToken) {
       throw new CLIError(
-        'Missing DISCORD_BOT_TOKEN environment variable. Add it to ${PAI_DIR}/.env'
+        'Missing DISCORD_BOT_TOKEN environment variable. Add it to ${TAI_DIR}/.env'
       );
     }
 
     if (!channelId) {
       throw new CLIError(
-        'Missing MIDJOURNEY_CHANNEL_ID environment variable. Add it to ${PAI_DIR}/.env'
+        'Missing MIDJOURNEY_CHANNEL_ID environment variable. Add it to ${TAI_DIR}/.env'
       );
     }
 

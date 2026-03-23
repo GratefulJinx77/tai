@@ -23,12 +23,12 @@ import { extname, resolve } from "node:path";
 // ============================================================================
 
 /**
- * Load environment variables from ${PAI_DIR}/.env
+ * Load environment variables from ${TAI_DIR}/.env
  * This ensures API keys are available regardless of how the CLI is invoked
  */
 async function loadEnv(): Promise<void> {
-  const paiDir = process.env.PAI_DIR || resolve(process.env.HOME!, '.claude');
-  const envPath = resolve(paiDir, '.env');
+  const taiDir = process.env.TAI_DIR || resolve(process.cwd(), '.tai');
+  const envPath = resolve(taiDir, '.env');
   try {
     const envContent = await readFile(envPath, 'utf-8');
     for (const line of envContent.split('\n')) {
@@ -188,7 +188,7 @@ async function detectMimeType(filePath: string): Promise<string> {
 // ============================================================================
 
 // PAI directory for documentation paths
-const PAI_DIR = process.env.PAI_DIR || `${process.env.HOME}/.claude`;
+const TAI_DIR = process.env.TAI_DIR || `${process.cwd()}/.tai`;
 
 function showHelp(): void {
   console.log(`
@@ -277,8 +277,8 @@ ERROR CODES:
   1  General error (invalid arguments, API error, file write error)
 
 MORE INFO:
-  Documentation: ${PAI_DIR}/skills/Media/Art/README.md
-  Source: ${PAI_DIR}/skills/Media/Art/Tools/Generate.ts
+  Documentation: ${TAI_DIR}/skills/Media/Art/README.md
+  Source: ${TAI_DIR}/skills/Media/Art/Tools/Generate.ts
 `);
   process.exit(0);
 }
@@ -688,7 +688,7 @@ async function generateWithNanoBananaPro(
 
 async function main(): Promise<void> {
   try {
-    // Load API keys from ${PAI_DIR}/.env
+    // Load API keys from ${TAI_DIR}/.env
     await loadEnv();
 
     const args = parseArgs(process.argv);

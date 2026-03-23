@@ -68,6 +68,12 @@ hooks:
 
   # ─── Workflow Hooks (Enforcement) ───────────────────────────────
 
+  BootstrapGuard:
+    file: BootstrapGuard.hook.ts
+    event: UserPromptSubmit
+    tier: required
+    description: Enforce context bootstrap on first session when .bootstrap-pending exists
+
   SecurityValidator:
     file: SecurityValidator.hook.ts
     event: PreToolUse

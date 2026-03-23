@@ -70,7 +70,7 @@ urls=$(pbpaste)
 import { isContentAlreadyParsed } from '../utils/collision-detection';
 
 const entityIndex = JSON.parse(
-  fs.readFileSync('~/.claude/skills/parser/entity-index.json', 'utf-8')
+  fs.readFileSync('.tai/skills/utilities/Parser/entity-index.json', 'utf-8')
 );
 
 const newUrls = urls.filter(url => !isContentAlreadyParsed(url, entityIndex));
@@ -106,7 +106,7 @@ const contents = await Promise.all(
 
 **Option C: Bright Data (Production)**
 ```typescript
-import { scrapeAsMarkdown } from '~/.claude/skills/mcp/Providers/brightdata/actors';
+import { scrapeAsMarkdown } from '.tai/skills/mcp/Providers/brightdata/actors';
 
 const contents = await Promise.all(
   urls.map(async (url) => {
@@ -453,7 +453,7 @@ function processArticleEntities(
 }
 
 // Main processing
-const entityIndexPath = '~/.claude/skills/parser/entity-index.json';
+const entityIndexPath = '.tai/skills/utilities/Parser/entity-index.json';
 const entityIndex: EntityIndex = JSON.parse(fs.readFileSync(entityIndexPath, 'utf-8'));
 
 const rawEntities = JSON.parse(fs.readFileSync('raw-entities.json', 'utf-8'));
@@ -484,7 +484,7 @@ const ajv = new Ajv({ strict: false });
 addFormats(ajv);
 
 const schema = JSON.parse(
-  fs.readFileSync('~/.claude/skills/parser/schema/content-schema.json', 'utf-8')
+  fs.readFileSync('.tai/skills/utilities/Parser/schema/content-schema.json', 'utf-8')
 );
 
 const validate = ajv.compile(schema);
@@ -556,7 +556,7 @@ processedArticles.forEach((article: any, index: number) => {
   } else {
     // Save validated content
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-    const filename = `~/.claude/skills/parser/output/${timestamp}_batch-${index + 1}.json`;
+    const filename = `.tai/skills/utilities/Parser/output/${timestamp}_batch-${index + 1}.json`;
     fs.writeFileSync(filename, JSON.stringify(fullContent, null, 2));
     console.log(`Saved: ${filename}`);
   }
@@ -569,7 +569,7 @@ The entity index is automatically updated during step 5. Verify the update:
 
 ```bash
 # Check entity counts
-cat ~/.claude/skills/parser/entity-index.json | jq '{
+cat .tai/skills/utilities/Parser/entity-index.json | jq '{
   people_count: (.people | length),
   companies_count: (.companies | length),
   links_count: (.links | length),
@@ -659,7 +659,7 @@ if (!rawEntitiesPath) {
   process.exit(1);
 }
 
-const entityIndexPath = `${process.env.HOME}/.claude/skills/parser/entity-index.json`;
+const entityIndexPath = `${process.cwd()}/.tai/skills/utilities/Parser/entity-index.json`;
 const entityIndex = JSON.parse(fs.readFileSync(entityIndexPath, 'utf-8'));
 
 const rawEntities = JSON.parse(fs.readFileSync(rawEntitiesPath, 'utf-8'));
@@ -675,7 +675,7 @@ fs.writeFileSync(entityIndexPath, JSON.stringify(entityIndex, null, 2));
 // Save processed articles
 processedArticles.forEach((article: any, index: number) => {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-  const filename = `${process.env.HOME}/.claude/skills/parser/output/${timestamp}_batch-${index + 1}.json`;
+  const filename = `${process.cwd()}/.tai/skills/utilities/Parser/output/${timestamp}_batch-${index + 1}.json`;
   fs.writeFileSync(filename, JSON.stringify(article, null, 2));
   console.log(`Saved: ${filename}`);
 });

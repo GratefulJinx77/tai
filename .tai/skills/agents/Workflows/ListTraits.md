@@ -28,7 +28,7 @@ User says:
 ### Step 1: Run ComposeAgent with --list Flag
 
 ```bash
-bun run ~/.claude/skills/Agents/Tools/ComposeAgent.ts --list
+bun run .tai/skills/agents/Tools/ComposeAgent.ts --list
 ```
 
 ### Step 2: Present Results to User
@@ -208,6 +208,6 @@ Popular Combos:
 
 ## References
 
-- Full trait definitions: `~/.claude/skills/Agents/Data/Traits.yaml`
+- Full trait definitions: `.tai/skills/agents/Data/Traits.yaml`
 - Voice mappings: Lines 349-794 in Traits.yaml
-- ComposeAgent tool: `~/.claude/skills/Agents/Tools/ComposeAgent.ts`
+- ComposeAgent tool: `.tai/skills/agents/Tools/ComposeAgent.ts`

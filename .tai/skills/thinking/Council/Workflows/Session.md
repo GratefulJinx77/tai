@@ -183,7 +183,7 @@ TaskUpdate(
 **3. Save session state to disk:**
 
 ```
-mkdir -p ~/.claude/MEMORY/WORK/council-{slug}/
+mkdir -p .tai/memory/state/work/council-{slug}/
 ```
 
 Write `session-state.json`:
@@ -226,8 +226,8 @@ Follow-up commands:
 
 Load state:
 ```
-Read ~/.claude/MEMORY/WORK/council-{slug}/session-state.json
-Read ~/.claude/MEMORY/WORK/council-{slug}/transcript.md
+Read .tai/memory/state/work/council-{slug}/session-state.json
+Read .tai/memory/state/work/council-{slug}/transcript.md
 ```
 
 **Full reconvene** ("bring back the council"):

@@ -33,7 +33,7 @@ Ask the user:
 
 ### Step 2: Create Judge Config
 
-Create `~/.claude/skills/Utilities/Evals/UseCases/<name>/judge-config.yaml`:
+Create `.tai/skills/utilities/Evals/UseCases/<name>/judge-config.yaml`:
 
 ```yaml
 judge:
@@ -65,10 +65,10 @@ output:
 ### Step 3: Render Judge Prompt
 
 ```bash
-bun run ~/.claude/Templates/Tools/RenderTemplate.ts \
+bun run .tai/templates/Tools/RenderTemplate.ts \
   -t Evals/Judge.hbs \
-  -d ~/.claude/skills/Utilities/Evals/UseCases/<name>/judge-config.yaml \
-  -o ~/.claude/skills/Utilities/Evals/UseCases/<name>/judge-prompt.md \
+  -d .tai/skills/utilities/Evals/UseCases/<name>/judge-config.yaml \
+  -o .tai/skills/utilities/Evals/UseCases/<name>/judge-prompt.md \
   --preview
 ```
 
@@ -99,7 +99,7 @@ criteria:
 Run a single test case to verify:
 
 ```bash
-bun run ~/.claude/skills/Utilities/Evals/EvalServer/cli-run.ts \
+bun run .tai/skills/utilities/Evals/EvalServer/cli-run.ts \
   --use-case <name> \
   --test-id <single-test> \
   --verbose

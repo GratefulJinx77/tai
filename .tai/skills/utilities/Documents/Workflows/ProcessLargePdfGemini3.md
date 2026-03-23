@@ -523,7 +523,7 @@ Output only markdown, no JSON." --attach document.pdf > document.md
 ```typescript
 // Import extracted newsletter content to database
 import { parserSchema } from './parser-output.json';
-import { insertNewsletterContent } from '~/.claude/skills/parser/db';
+import { insertNewsletterContent } from '.tai/skills/utilities/Parser/db';
 
 await insertNewsletterContent(parserSchema);
 console.log('✅ Newsletter content added to database');
@@ -656,10 +656,10 @@ cat raw.json | sed 's/```json//g' | sed 's/```//g' | jq '.' > clean.json
 
 ## Next Steps
 
-- For traditional PDF extraction (text-only), see `~/.claude/skills/documents/pdf/SKILL.md`
-- For PDF form filling, see `~/.claude/skills/documents/pdf/forms.md`
-- For parser integration, see `~/.claude/skills/parser/SKILL.md`
-- For newsletter database schema, see `~/.claude/Context/databases/newsletter/schema.sql`
+- For traditional PDF extraction (text-only), see `.tai/skills/documents/pdf/SKILL.md`
+- For PDF form filling, see `.tai/skills/documents/pdf/forms.md`
+- For parser integration, see `.tai/skills/utilities/Parser/SKILL.md`
+- For newsletter database schema, see `.tai/context/databases/newsletter/schema.sql`
 
 ## Summary
 
