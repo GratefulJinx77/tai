@@ -414,6 +414,24 @@ GITEOF
     fi
     if [ -n "$config_city" ]; then
         echo -e "location_city='${config_city}'\nlocation_state='${config_state}'" > "$_parallel_tmp/location.sh"
+        # Geocode configured city → lat/lon for weather API
+        # Only re-geocode if location cache is missing or city changed
+        _cached_city=""
+        [ -f "$LOCATION_CACHE" ] && _cached_city=$(jq -r '.config_city // empty' "$LOCATION_CACHE" 2>/dev/null)
+        if [ "$_cached_city" != "$config_city" ]; then
+            _geo=$(curl -s --max-time 2 "https://geocoding-api.open-meteo.com/v1/search?name=$(printf '%s' "$config_city" | jq -sRr @uri)&count=1&language=en" 2>/dev/null)
+            if [ -n "$_geo" ] && echo "$_geo" | jq -e '.results[0].latitude' >/dev/null 2>&1; then
+                _lat=$(echo "$_geo" | jq -r '.results[0].latitude')
+                _lon=$(echo "$_geo" | jq -r '.results[0].longitude')
+                mkdir -p "$(dirname "$LOCATION_CACHE")" 2>/dev/null
+                jq -n --arg city "$config_city" --arg state "$config_state" \
+                    --argjson lat "$_lat" --argjson lon "$_lon" \
+                    '{city: $city, regionName: $state, lat: $lat, lon: $lon, config_city: $city}' \
+                    > "$LOCATION_CACHE"
+                # Invalidate weather cache so it re-fetches for new coordinates
+                rm -f "$WEATHER_CACHE" 2>/dev/null
+            fi
+        fi
     else
     cache_age=999999
     [ -f "$LOCATION_CACHE" ] && cache_age=$(($(date +%s) - $(get_mtime "$LOCATION_CACHE")))
