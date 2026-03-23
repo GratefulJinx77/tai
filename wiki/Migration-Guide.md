@@ -8,15 +8,15 @@ If your project currently uses a CLAUDE.md file for AI context, TAI gives you st
 
 ### Step-by-Step
 
-1. **Clone and install TAI**
+1. **Run the setup script**
 
    ```bash
-   git clone https://github.com/GratefulJinx77/tai.git .tai-upstream
-   cd .tai-upstream && bun install && cd ..
-   .tai-upstream/.tai/hooks/install.sh
+   curl -fsSL https://raw.githubusercontent.com/GratefulJinx77/tai/main/setup.sh | bash
    ```
 
-   This scaffolds the `.tai/` directory without touching your existing CLAUDE.md.
+   This clones TAI, installs dependencies, and runs the interactive wizard. The wizard prompts for team name, your name, email, GitHub, city, state, project stack, and build commands — auto-detecting what it can from your project.
+
+   If your CLAUDE.md has >500 bytes, it creates `.bootstrap-pending` so Claude extracts your architecture/boundaries/patterns on first session.
 
 2. **Move architecture documentation**
 
@@ -30,21 +30,7 @@ If your project currently uses a CLAUDE.md file for AI context, TAI gives you st
 
    Extract naming conventions, code patterns, and testing conventions to `.tai/context/patterns.md`.
 
-5. **Add team members**
-
-   Edit `.tai/config/team.yaml` with each team member's name, email (matching `git config user.email`), GitHub username, and default role.
-
-6. **Configure project stack**
-
-   Edit `.tai/config/project.yaml` with your language, framework, build commands, and test runner.
-
-7. **Install hooks**
-
-   ```bash
-   .tai/hooks/install.sh
-   ```
-
-8. **Trim CLAUDE.md**
+5. **Trim CLAUDE.md**
 
    Reduce your CLAUDE.md to a project description and a pointer to `.tai/CORE.md`. TAI loads its own context automatically -- your CLAUDE.md no longer needs to carry all of it.
 
@@ -154,8 +140,10 @@ If your project currently uses a CLAUDE.md file for AI context, TAI gives you st
 7. **Update hooks**
 
    ```bash
-   .tai/hooks/install.sh
+   curl -fsSL https://raw.githubusercontent.com/GratefulJinx77/tai/main/setup.sh | bash
    ```
+
+   This pulls the latest framework and re-registers hooks.
 
 8. **Commit**
 

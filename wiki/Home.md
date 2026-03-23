@@ -35,9 +35,17 @@ When Claude Code starts in a TAI-enabled project:
 6. Verifies hooks are installed
 7. Displays the status line
 
+## Quick Start
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/GratefulJinx77/tai/main/setup.sh | bash
+```
+
+One command: clones TAI, installs deps, runs interactive wizard. Works for new and existing projects.
+
 ## Quick Links
 
-- [[Getting Started]] -- Install TAI and run your first session
+- [[Getting Started]] -- Full installation walkthrough
 - [[Governance]] -- Roles, admin mode, team configuration
 - [[Hook System]] -- Enforcement hooks, tiers, and customization
 - [[Memory System]] -- Shared context across all sessions

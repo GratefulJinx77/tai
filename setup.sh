@@ -62,6 +62,7 @@ fi
 
 echo "Installing dependencies..."
 (cd "$TAI_DIR" && bun install --silent 2>/dev/null)
+(cd "$TAI_DIR/cli" && bun install --silent 2>/dev/null)
 
 # ── Init, Reconfigure, or Update ─────────────────────────────────────────────
 

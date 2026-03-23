@@ -21,84 +21,33 @@ jq --version && bun --version && python3 --version && git --version
 
 ## Quick Start
 
-### 1. Clone TAI into your project
+One command to install TAI in any project (new or existing):
 
 ```bash
-cd /path/to/your-project
-git clone https://github.com/GratefulJinx77/tai.git .tai-upstream
+curl -fsSL https://raw.githubusercontent.com/GratefulJinx77/tai/main/setup.sh | bash
 ```
 
-### 2. Install dependencies
+This clones the TAI framework, installs dependencies, and launches an interactive wizard that prompts for:
+- Team name, your name, email, GitHub username, city, state
+- Project name, description, language, framework, database, test runner, linter
+- Build, test, lint, type-check, and dev server commands
 
-```bash
-cd .tai-upstream && bun install && cd ..
-```
+It auto-detects what it can from `git config`, `package.json`, `tsconfig.json`, etc. Hit enter to accept defaults.
 
-### 3. Run the installer
+When finished, the wizard:
+- Creates `.tai/` with your config, context templates, memory stores, and roles
+- Creates `.claude/settings.local.json` with hooks and statusline registered
+- Creates `.claude/rules/tai.md` and `.claude/commands/*.md` (5 slash commands)
+- Symlinks git hooks (pre-commit, pre-push)
+- If your project has an existing CLAUDE.md, creates `.bootstrap-pending` for automatic context extraction on first session
 
-```bash
-.tai-upstream/.tai/hooks/install.sh
-```
+### Define boundaries and patterns
 
-This creates:
-- `.tai/` — Instance directories (config, context, memory, roles)
-- `.claude/settings.local.json` — 18 hooks + statusline registered with Claude Code
-- `.claude/rules/tai.md` — Session initialization rules
-- `.claude/commands/*.md` — 5 slash commands
-- `.git/hooks/pre-commit`, `.git/hooks/pre-push` — Convention enforcement
-
-Install modes:
-```bash
-.tai-upstream/.tai/hooks/install.sh              # Required + recommended (default)
-.tai-upstream/.tai/hooks/install.sh --minimal     # Required hooks only
-.tai-upstream/.tai/hooks/install.sh --all         # All hooks including optional
-.tai-upstream/.tai/hooks/install.sh --list        # List all hooks and tiers
-```
-
-### 4. Configure your team
-
-Edit `.tai/config/team.yaml`:
-```yaml
-team:
-  name: "My Project"
-  admin_users: ["alice@company.com"]
-  members:
-    - name: "Alice"
-      email: "alice@company.com"
-      github: "alice-gh"
-      default_role: dev
-    - name: "Bob"
-      email: "bob@company.com"
-      github: "bob-gh"
-      default_role: qa
-```
-
-The `email` field must match each member's `git config user.email`.
-
-### 5. Configure your project
-
-Edit `.tai/config/project.yaml`:
-```yaml
-project:
-  name: "My Project"
-  stack:
-    language: "TypeScript"
-    test_runner: "Vitest"
-  commands:
-    build: "npm run build"
-    test: "npm test"
-    lint: "npm run lint"
-    type_check: "npx tsc --noEmit"
-```
-
-Leave commands empty (`""`) to skip them in pre-commit/pre-push hooks.
-
-### 6. Define boundaries and patterns
-
+After installation, populate these context files:
 - `.tai/context/boundaries.md` — Forbidden imports, service separation rules
 - `.tai/context/patterns.md` — Naming conventions, code patterns, testing conventions
 
-### 7. Launch Claude Code
+### Launch Claude Code
 
 ```bash
 claude
@@ -142,12 +91,23 @@ echo '{"context_window":{"used_percentage":50}}' | bash .tai/hooks/statusline-co
 
 ## Updating TAI
 
+Run the same setup command again — it auto-detects the existing install and updates:
+
 ```bash
-cd .tai-upstream && git pull && bun install && cd ..
-.tai-upstream/.tai/hooks/install.sh
+curl -fsSL https://raw.githubusercontent.com/GratefulJinx77/tai/main/setup.sh | bash
 ```
 
-The installer never overwrites instance files (config, context, memory). It only re-registers hooks, slash commands, and rules.
+This pulls the latest framework and re-registers hooks, slash commands, and rules. It never overwrites your config, context, or memory files.
+
+## Reconfiguring TAI
+
+Need to update team name, city, project stack, or other settings? Re-run the wizard:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/GratefulJinx77/tai/main/setup.sh | bash -s -- --reconfigure
+```
+
+This re-prompts for all team and project settings (pre-filled with current values) and rewrites `team.yaml` and `project.yaml`. Hooks, memory, and everything else stay untouched.
 
 ## Governance
 

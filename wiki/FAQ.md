@@ -41,7 +41,7 @@ Team members should use reasonably current versions to ensure hook compatibility
 3. Ensure their `email` matches their `git config user.email`
 4. If they should be an admin, add their email to `admin_users`
 5. Commit the change
-6. Have them run `.tai/hooks/install.sh` and register hooks in their Claude Code settings
+6. Have them run `curl -fsSL https://raw.githubusercontent.com/GratefulJinx77/tai/main/setup.sh | bash` to install hooks
 
 See [[Governance]] for details on roles and admin mode.
 
@@ -161,17 +161,27 @@ You can gitignore the telemetry directory if you don't want logs committed.
 
 ### How do I upgrade TAI to a newer version?
 
+Run the same setup command you used to install:
+
 ```bash
-cd .tai-upstream && git pull && bun install && cd ..
-.tai-upstream/.tai/hooks/install.sh
+curl -fsSL https://raw.githubusercontent.com/GratefulJinx77/tai/main/setup.sh | bash
 ```
 
-If you hit "detached HEAD":
-```bash
-cd .tai-upstream && git checkout main && git pull
-```
+It auto-detects the existing install, pulls the latest framework, and re-registers hooks. Your config, context, and memory files are never overwritten.
 
 For major version upgrades, see the [[Migration Guide]].
+
+---
+
+### How do I update my team name, city, or project settings?
+
+Run the setup script with `--reconfigure`:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/GratefulJinx77/tai/main/setup.sh | bash -s -- --reconfigure
+```
+
+This re-runs the interactive wizard with your current values pre-filled as defaults. Only `team.yaml` and `project.yaml` are rewritten — hooks, memory, and everything else stay untouched.
 
 ---
 
@@ -191,19 +201,18 @@ brew install jq         # macOS
 
 **Cause:** `project.yaml` has empty values with inline comments (e.g., `lint: ""  # example`). The YAML comment wasn't stripped before `eval`, producing garbage. Fixed in TAI v2.0.0+.
 
-**Fix:** Pull latest TAI and re-run install:
+**Fix:** Re-run the setup script:
 ```bash
-cd .tai-upstream && git pull && cd ..
-.tai-upstream/.tai/hooks/install.sh
+curl -fsSL https://raw.githubusercontent.com/GratefulJinx77/tai/main/setup.sh | bash
 ```
 
 ### Hooks don't fire
 
 **Cause:** `.claude/settings.local.json` doesn't exist or doesn't contain hook registrations.
 
-**Fix:** Re-run the installer, then restart your Claude session:
+**Fix:** Re-run the setup script, then restart your Claude session:
 ```bash
-.tai-upstream/.tai/hooks/install.sh
+curl -fsSL https://raw.githubusercontent.com/GratefulJinx77/tai/main/setup.sh | bash
 ```
 
 ### "Cannot find package 'yaml'"
@@ -228,6 +237,15 @@ cd .tai-upstream && bun install
 **Fix:**
 ```bash
 cd .tai-upstream && git checkout main && git pull
+```
+
+### "Cannot find package 'commander'"
+
+**Cause:** CLI dependencies were not installed. The CLI has its own `package.json` in `cli/`.
+
+**Fix:** Re-run the setup script (it now installs both root and CLI dependencies):
+```bash
+curl -fsSL https://raw.githubusercontent.com/GratefulJinx77/tai/main/setup.sh | bash
 ```
 
 ### Install script fails with "Missing required dependencies"
