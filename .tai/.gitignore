@@ -18,3 +18,4 @@ memory/state/last-response.txt
 
 # Agent memory (per-machine)
 agent-memory/
+**/bun.lock
