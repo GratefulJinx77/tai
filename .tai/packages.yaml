@@ -35,6 +35,10 @@ skills:
     version: "1.0.0"
     tier: recommended
     description: "CLI generation, skill scaffolding, browser automation"
+  investigation:
+    version: "1.0.0"
+    tier: optional
+    description: "OSINT, due diligence, company intel, people search"
   project-audit:
     version: "1.0.0"
     tier: recommended
