@@ -219,7 +219,7 @@ packages.yaml
 │   └── sprint-current.md      # Active sprint, ISC criteria
 │
 ├── hooks/
-│   ├── config.yaml            # Hook registry (27 hooks, tiers, events)
+│   ├── config.yaml            # Hook registry (31 hooks, tiers, events)
 │   ├── install.sh             # Git hook installer (--minimal/--all/--list)
 │   ├── settings-template.json # Claude Code settings.json template
 │   ├── lib/                   # Shared hook utilities
