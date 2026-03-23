@@ -21,18 +21,18 @@
 set -euo pipefail
 
 # ── Detect paths ─────────────────────────────────────────────────
-# FRAMEWORK_DIR = where this script lives (the submodule)
+# FRAMEWORK_DIR = where this script lives (the TAI framework source)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FRAMEWORK_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-# REPO_ROOT = the actual project root
-# show-superproject-working-tree returns empty string (exit 0) when not a submodule,
-# so we must check the output, not just the exit code.
-_super="$(cd "$FRAMEWORK_DIR" && git rev-parse --show-superproject-working-tree 2>/dev/null)"
-if [ -n "$_super" ]; then
-    REPO_ROOT="$_super"
-else
-    REPO_ROOT="$(cd "$FRAMEWORK_DIR" && git rev-parse --show-toplevel 2>/dev/null || pwd)"
+# REPO_ROOT = the CONSUMING project (caller's working directory, not the framework)
+# This is critical: install.sh lives in the framework but installs into the consumer.
+REPO_ROOT="$(pwd)"
+
+# Verify we're in a git repo
+if ! git rev-parse --git-dir > /dev/null 2>&1; then
+    echo "TAI: Error — not a git repository. Run 'git init' first."
+    exit 1
 fi
 
 # FRAMEWORK_REL = relative path from REPO_ROOT to FRAMEWORK_DIR

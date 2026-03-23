@@ -49,7 +49,7 @@ This installs the `yaml` package that TAI hooks require.
 **What it does:**
 
 - Scaffolds `.tai/` instance directories (config, context, memory, roles) — copies templates, never overwrites existing files
-- Creates `.claude/settings.local.json` — registers 17 hooks and the statusline with Claude Code
+- Creates `.claude/settings.local.json` — registers 18 hooks and the statusline with Claude Code
 - Creates `.claude/rules/tai.md` — session initialization instructions
 - Creates `.claude/commands/*.md` — 5 slash commands (`/tai-validate`, `/tai-admin`, `/tai-sprint`, `/tai-decisions`, `/tai-health`)
 - Symlinks git hooks (pre-commit, pre-push) to `.git/hooks/`

@@ -141,7 +141,7 @@ The DeployVerify hook watches for `git push` commands and waits for CI to pass b
 
 ### Can I use TAI with a monorepo?
 
-Yes. Run `tai init` in the monorepo root. The `.tai/` directory sits alongside your existing structure. Boundaries in `context/boundaries.md` can define service separation rules between packages.
+Yes. Clone TAI and run `install.sh` from the monorepo root. The `.tai/` directory sits alongside your existing structure. Boundaries in `context/boundaries.md` can define service separation rules between packages.
 
 ---
 

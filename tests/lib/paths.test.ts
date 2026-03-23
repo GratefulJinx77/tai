@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { join, dirname } from 'path';
+import { join, dirname, resolve } from 'path';
 
 // We need to reset the cached value between tests
 // The module caches getTaiDir, so we re-import each test via dynamic import

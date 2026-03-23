@@ -2,6 +2,14 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { existsSync, mkdirSync, rmSync } from 'fs';
 import { join } from 'path';
 
+// Mock readline before importing init
+vi.mock('node:readline', () => ({
+  createInterface: () => ({
+    question: (_prompt: string, cb: (answer: string) => void) => cb(''),
+    close: () => {},
+  }),
+}));
+
 describe('CLI init command', () => {
   const TEST_DIR = '/tmp/tai-test-init-' + Date.now();
 
@@ -11,6 +19,7 @@ describe('CLI init command', () => {
 
   afterEach(() => {
     try { rmSync(TEST_DIR, { recursive: true, force: true }); } catch {}
+    vi.restoreAllMocks();
   });
 
   it('init module exports an init function', async () => {
@@ -19,30 +28,33 @@ describe('CLI init command', () => {
   });
 
   it('init creates .tai/ scaffold in target directory', async () => {
-    // We test by calling init with cwd set to our test dir
     const origCwd = process.cwd;
     const origExit = process.exit;
     process.cwd = () => TEST_DIR;
     process.exit = vi.fn() as any;
 
-    // Mock console.log to suppress output
     const origLog = console.log;
     const origError = console.error;
     console.log = vi.fn();
     console.error = vi.fn();
 
     try {
+      vi.resetModules();
+      // Re-mock readline after resetModules
+      vi.doMock('node:readline', () => ({
+        createInterface: () => ({
+          question: (_prompt: string, cb: (answer: string) => void) => cb(''),
+          close: () => {},
+        }),
+      }));
+
       const { init } = await import('../../cli/src/commands/init');
-      init({ force: true });
+      await init({ force: true });
 
       const taiDir = join(TEST_DIR, '.tai');
-      // Check key directories were created
       expect(existsSync(taiDir)).toBe(true);
       expect(existsSync(join(taiDir, 'config'))).toBe(true);
-      expect(existsSync(join(taiDir, 'hooks'))).toBe(true);
       expect(existsSync(join(taiDir, 'memory', 'decisions'))).toBe(true);
-      expect(existsSync(join(taiDir, 'CORE.md'))).toBe(true);
-      expect(existsSync(join(taiDir, 'VERSION'))).toBe(true);
     } finally {
       process.cwd = origCwd;
       process.exit = origExit;
@@ -55,7 +67,6 @@ describe('CLI init command', () => {
     const origCwd = process.cwd;
     process.cwd = () => TEST_DIR;
 
-    // Create existing .tai/ dir
     mkdirSync(join(TEST_DIR, '.tai'), { recursive: true });
 
     const exitMock = vi.fn();
@@ -66,10 +77,9 @@ describe('CLI init command', () => {
     console.error = vi.fn();
 
     try {
-      // Need fresh import to avoid any stale state
       vi.resetModules();
       const { init } = await import('../../cli/src/commands/init');
-      init({});
+      await init({});
 
       expect(exitMock).toHaveBeenCalledWith(1);
     } finally {

@@ -42,7 +42,7 @@ cd .tai-upstream && bun install && cd ..
 
 This creates:
 - `.tai/` — Instance directories (config, context, memory, roles)
-- `.claude/settings.local.json` — 17 hooks + statusline registered with Claude Code
+- `.claude/settings.local.json` — 18 hooks + statusline registered with Claude Code
 - `.claude/rules/tai.md` — Session initialization rules
 - `.claude/commands/*.md` — 5 slash commands
 - `.git/hooks/pre-commit`, `.git/hooks/pre-push` — Convention enforcement

@@ -6,3 +6,5 @@ dist/
 .DS_Store
 cli/dist/
 cli/node_modules/
+__pycache__/
+bun.lock

@@ -596,7 +596,7 @@ if [ $# -eq 0 ]; then
 fi
 
 URLS=("$@")
-SKILL_DIR="$HOME/.claude/skills/parser"
+SKILL_DIR="$(pwd)/.tai/skills/utilities/Parser"
 OUTPUT_DIR="$SKILL_DIR/output"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 

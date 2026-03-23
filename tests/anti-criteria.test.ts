@@ -96,8 +96,8 @@ describe('anti-criteria verification', () => {
       const violations: string[] = [];
 
       for (const file of allFiles) {
-        // Skip node_modules and .git
-        if (file.includes('node_modules') || file.includes('.git/')) continue;
+        // Skip node_modules, .git, and tai-validate (intentional grep pattern)
+        if (file.includes('node_modules') || file.includes('.git/') || file.includes('tai-validate')) continue;
 
         const content = readFileSync(file, 'utf-8');
         if (content.includes('~/.claude/') || content.includes('$HOME/.claude/') || content.includes('${HOME}/.claude/')) {

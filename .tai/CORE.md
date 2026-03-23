@@ -59,6 +59,5 @@ TAI maintains team-shared memory across all sessions:
 Conventions are documented in context/patterns.md and enforced by:
 - pre-commit hook (lint, type-check, boundary-scan)
 - pre-push hook (test suite)
-- pre-pr hook (build + tests + PR description)
 
 These are team agreements, not surveillance. Hook status is logged without individual attribution.
