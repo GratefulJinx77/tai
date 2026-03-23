@@ -17,6 +17,7 @@ program
   .command("init")
   .description("Initialize .tai/ in the current project directory")
   .option("-f, --force", "Overwrite existing .tai/ directory")
+  .option("-r, --reconfigure", "Re-run team/project prompts without touching hooks or memory")
   .action(init);
 
 program

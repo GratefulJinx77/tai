@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, writeFileSync, cpSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync, cpSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { createInterface } from "node:readline";
 import { execSync } from "node:child_process";
@@ -32,16 +32,40 @@ function getGitBranch(): string {
 
 interface InitOptions {
   force?: boolean;
+  reconfigure?: boolean;
+}
+
+/**
+ * Parse simple YAML values from team.yaml/project.yaml.
+ * Not a full YAML parser — handles the flat key: "value" patterns we write.
+ */
+function loadExistingConfig(filePath: string): Record<string, string> {
+  const values: Record<string, string> = {};
+  if (!existsSync(filePath)) return values;
+  try {
+    const lines = readFileSync(filePath, "utf-8").split("\n");
+    for (const line of lines) {
+      const match = line.match(/^\s+([\w_]+):\s*"?([^"]*)"?\s*$/);
+      if (match) values[match[1]] = match[2];
+    }
+  } catch { /* ignore */ }
+  return values;
 }
 
 export async function init(options: InitOptions): Promise<void> {
   const cwd = process.cwd();
   const taiDir = join(cwd, ".tai");
+  const isReconfigure = options.reconfigure === true;
 
-  if (existsSync(taiDir) && !options.force) {
+  if (existsSync(taiDir) && !options.force && !isReconfigure) {
     console.error(
-      "Error: .tai/ already exists. Use --force to overwrite."
+      "Error: .tai/ already exists. Use --force to overwrite or --reconfigure to update config."
     );
+    process.exit(1);
+  }
+
+  if (isReconfigure && !existsSync(taiDir)) {
+    console.error("Error: .tai/ not found. Use 'tai init' for fresh setup.");
     process.exit(1);
   }
 
@@ -59,8 +83,16 @@ export async function init(options: InitOptions): Promise<void> {
     process.exit(1);
   }
 
-  console.log("\n── TAI Init ──────────────────────────────────\n");
-  console.log("Setting up Team AI Infrastructure.\n");
+  const header = isReconfigure ? "TAI Reconfigure" : "TAI Init";
+  console.log(`\n── ${header} ──────────────────────────────────\n`);
+  console.log(isReconfigure
+    ? "Updating team and project configuration. Hooks and memory are untouched.\n"
+    : "Setting up Team AI Infrastructure.\n"
+  );
+
+  // Load existing config values as defaults for reconfigure
+  const existingTeam = isReconfigure ? loadExistingConfig(join(taiDir, "config", "team.yaml")) : {};
+  const existingProject = isReconfigure ? loadExistingConfig(join(taiDir, "config", "project.yaml")) : {};
 
   // Detect git info
   const gitName = getGitConfig("user.name");
@@ -71,32 +103,35 @@ export async function init(options: InitOptions): Promise<void> {
 
   // ── Team Info ──
   console.log("── Team ──\n");
-  const teamName = await ask("Team name", projectDir);
-  const userName = await ask("Your name", gitName);
-  const userEmail = await ask("Your email", gitEmail);
-  const userGithub = await ask("Your GitHub username", gitHub);
+  const teamName = await ask("Team name", existingTeam.name || projectDir);
+  const userName = await ask("Your name", existingTeam.name_member || gitName);
+  const userEmail = await ask("Your email", existingTeam.email || gitEmail);
+  const userGithub = await ask("Your GitHub username", existingTeam.github || gitHub);
+  const userCity = await ask("Your city", existingTeam.city || "");
+  const userState = await ask("Your state/region", existingTeam.state || "");
 
   // ── Project Info ──
   console.log("\n── Project ──\n");
-  const projectName = await ask("Project name", projectDir);
-  const projectDesc = await ask("Description", "");
-  const language = await ask("Language", detectLanguage(cwd));
-  const framework = await ask("Framework", "");
-  const database = await ask("Database", "");
-  const testRunner = await ask("Test runner", detectTestRunner(cwd));
-  const linter = await ask("Linter", detectLinter(cwd));
+  const projectName = await ask("Project name", existingProject.name || projectDir);
+  const projectDesc = await ask("Description", existingProject.description || "");
+  const language = await ask("Language", existingProject.language || detectLanguage(cwd));
+  const framework = await ask("Framework", existingProject.framework || "");
+  const database = await ask("Database", existingProject.database || "");
+  const testRunner = await ask("Test runner", existingProject.test_runner || detectTestRunner(cwd));
+  const linter = await ask("Linter", existingProject.linter || detectLinter(cwd));
 
   // ── Commands ──
   console.log("\n── Build Commands (leave empty to skip) ──\n");
-  const buildCmd = await ask("Build", detectCommand(cwd, "build"));
-  const testCmd = await ask("Test", detectCommand(cwd, "test"));
-  const lintCmd = await ask("Lint", detectCommand(cwd, "lint"));
-  const typeCheckCmd = await ask("Type check", "");
-  const devCmd = await ask("Dev server", detectCommand(cwd, "dev"));
+  const buildCmd = await ask("Build", existingProject.build || detectCommand(cwd, "build"));
+  const testCmd = await ask("Test", existingProject.test || detectCommand(cwd, "test"));
+  const lintCmd = await ask("Lint", existingProject.lint || detectCommand(cwd, "lint"));
+  const typeCheckCmd = await ask("Type check", existingProject.type_check || "");
+  const devCmd = await ask("Dev server", existingProject.dev || detectCommand(cwd, "dev"));
 
   rl.close();
 
-  // ── Scaffold ──
+  // ── Scaffold (skip in reconfigure mode) ──
+  if (!isReconfigure) {
   console.log("\n── Creating .tai/ ──\n");
 
   // Check if we're in the TAI source repo (has CORE.md to copy)
@@ -122,6 +157,7 @@ export async function init(options: InitOptions): Promise<void> {
     }
     console.log("  Created directory structure.");
   }
+  } // end if (!isReconfigure)
 
   // ── Write config files (always overwrite with interactive values) ──
   writeFileSync(
@@ -135,8 +171,8 @@ export async function init(options: InitOptions): Promise<void> {
       github: "${userGithub}"
       default_role: dev
       location:
-        city: ""
-        state: ""
+        city: "${userCity}"
+        state: "${userState}"
   notifications:
     platform: ""
     webhook_url: ""
@@ -172,24 +208,28 @@ export async function init(options: InitOptions): Promise<void> {
   );
   console.log("  Wrote config/project.yaml");
 
-  // ── Run install.sh if available ──
-  const installScript = join(taiDir, "hooks", "install.sh");
-  if (existsSync(installScript)) {
-    console.log("\n── Installing hooks ──\n");
-    try {
-      execSync(`bash "${installScript}"`, { stdio: "inherit", cwd });
-    } catch {
-      console.error("  Warning: install.sh failed. Run it manually.");
+  // ── Run install.sh if available (skip in reconfigure mode) ──
+  if (!isReconfigure) {
+    const installScript = join(taiDir, "hooks", "install.sh");
+    if (existsSync(installScript)) {
+      console.log("\n── Installing hooks ──\n");
+      try {
+        execSync(`bash "${installScript}"`, { stdio: "inherit", cwd });
+      } catch {
+        console.error("  Warning: install.sh failed. Run it manually.");
+      }
     }
   }
 
   // ── Summary ──
+  const verb = isReconfigure ? "reconfigured" : "initialized";
   console.log("\n═══════════════════════════════════════════════");
-  console.log(`  TAI initialized for ${teamName}`);
+  console.log(`  TAI ${verb} for ${teamName}`);
   console.log("═══════════════════════════════════════════════");
   console.log(`\n  Team:     ${teamName} (${userName})`);
+  if (userCity) console.log(`  Location: ${userCity}${userState ? ", " + userState : ""}`);
   console.log(`  Project:  ${projectName} (${language}${framework ? " + " + framework : ""})`);
-  console.log(`  Hooks:    installed via install.sh`);
+  if (!isReconfigure) console.log(`  Hooks:    installed via install.sh`);
   console.log(`\n  Next: launch Claude Code with 'claude'`);
   console.log("");
 }
