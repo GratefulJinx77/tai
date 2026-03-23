@@ -21,8 +21,27 @@ o MEMORY: D:3 Decisions | L:12 Learnings | S:5 Signals
 ## Segments
 
 ### TAI Header
-- **LOC**: Team member location (from team.yaml) + local time + weather
+- **LOC**: Team member location + local time + weather
 - **ENV**: Claude Code version, TAI version, hook count, role, team name
+
+#### Location Resolution
+
+Location is resolved in priority order:
+
+1. **Per-member city** — `team.yaml` member matching your `git config user.email`, `location.city` field
+2. **Team-level city** — `team.yaml` top-level `location.city` field
+3. **IP geolocation** — `ip-api.com` API (cached 1 year)
+
+Set your city via `tai init --reconfigure` or by editing `team.yaml` directly.
+
+#### Weather
+
+Weather is fetched from the [Open-Meteo API](https://open-meteo.com/) using lat/lon coordinates:
+
+- If city is configured in `team.yaml`, coordinates are geocoded via the [Open-Meteo Geocoding API](https://open-meteo.com/en/docs/geocoding-api) (cached until city changes)
+- If no city is configured, coordinates come from IP geolocation
+- Weather is cached for 15 minutes
+- Temperature unit defaults to Fahrenheit; set `temperatureUnit: celsius` in `project.yaml` to change
 
 ### CONTEXT
 - **Source**: Claude Code's `context_window.used_percentage` from statusline JSON input
@@ -82,6 +101,13 @@ Check `.claude/settings.local.json` exists and contains a `statusLine` key. Re-r
 
 ### Statusline shows stale data
 Restart the Claude Code session. Settings changes aren't fully applied mid-session.
+
+### Weather shows wrong location
+The weather API uses cached lat/lon coordinates. If you changed your city in `team.yaml`, delete the stale caches:
+```bash
+rm -f .tai/memory/state/location-cache.json .tai/memory/state/weather-cache.json
+```
+The statusline will re-geocode your configured city on the next render.
 
 ## Related Pages
 

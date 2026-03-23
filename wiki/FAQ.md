@@ -239,6 +239,19 @@ cd .tai-upstream && bun install
 cd .tai-upstream && git checkout main && git pull
 ```
 
+### Weather shows the wrong location
+
+**Cause:** The weather API uses cached lat/lon coordinates. If you recently changed your city in `team.yaml` (or via `--reconfigure`), the old coordinates may still be cached.
+
+**Fix:** Delete the stale caches:
+```bash
+rm -f .tai/memory/state/location-cache.json .tai/memory/state/weather-cache.json
+```
+
+The statusline will re-geocode your configured city on the next render. Going forward, it automatically re-geocodes whenever the city in `team.yaml` changes.
+
+---
+
 ### "Cannot find package 'commander'"
 
 **Cause:** CLI dependencies were not installed. The CLI has its own `package.json` in `cli/`.
