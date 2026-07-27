@@ -8,6 +8,7 @@
  * - YouTube (40k users)
  * - Facebook (35k users)
  * - Twitter/X (Unlimited)
+ * - Xquik X tweet and audience workflows
  */
 
 export * from './instagram'
@@ -16,3 +17,4 @@ export * from './tiktok'
 export * from './youtube'
 export * from './facebook'
 export * from './twitter'
+export * from './xquik'
